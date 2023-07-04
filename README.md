@@ -6,15 +6,15 @@
 ## Steps to open the project:
 1. Right click in the .uproject file and click generate visual studio solution.
    
-  1.1. ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/0146b2a1-3229-4a59-9c9a-005f08874efb)
+  ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/0146b2a1-3229-4a59-9c9a-005f08874efb)
   
-3. Open the .sln file
+2. Open the .sln file
    
-2.1. ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/2d18ba6b-c2ac-4b11-a506-52d3e5fcea67)
+ ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/2d18ba6b-c2ac-4b11-a506-52d3e5fcea67)
 
 3. Execute the project with the configuration "Development Editor / Win64" 
 
-3.1. ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/103df453-a01b-4455-b438-6b5c9c7e80e2)
+ ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/103df453-a01b-4455-b438-6b5c9c7e80e2)
 
 
 Alvaro Cabrero: https://www.linkedin.com/in/alvaro-cabrero-barros-b3132916b/
