@@ -26,6 +26,7 @@
 https://store.steampowered.com/app/2378380/Lunarpunk/
 
 ## Latest Gameplay video:
+https://www.youtube.com/watch?v=MBbs40GGjGU
 
 Programming Team:
    - Alberto Martos
