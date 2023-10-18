@@ -1,4 +1,7 @@
 # LunarPunk
+## Gameplay video:
+https://www.youtube.com/watch?v=MBbs40GGjGU
+
 ## Requirements:
 1. Unreal Engine 4.27: https://www.unrealengine.com/en-US/download
 2. Visual studio 2019/2022.
@@ -25,10 +28,7 @@
 ## Steam page:
 https://store.steampowered.com/app/2378380/Lunarpunk/
 
-## Latest Gameplay video:
-https://www.youtube.com/watch?v=MBbs40GGjGU
-
-Programming Team:
+# Programming Team:
    - Alberto Martos
    - Carmen Ocampos
    - Daniel Carrasco
