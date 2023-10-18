@@ -17,7 +17,14 @@
  ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/103df453-a01b-4455-b438-6b5c9c7e80e2)
 
 
-Alvaro Cabrero: https://www.linkedin.com/in/alvaro-cabrero-barros-b3132916b/
+Code Team:
+   - Alberto Martos
+   - Carmen Ocampos
+   - Daniel Carrasco
+   - Raul Corrales
+   - Adrian Gil
+   - Andrés Rojas
+   - Álvaro Cabrero: https://www.linkedin.com/in/alvaro-cabrero-barros-b3132916b/
 
 © Walking Octopus Games
 
