@@ -74,6 +74,7 @@ void UShootAbilityComponent::Shoot(bool _IsPressed)
   if (bCanShoot && IsPressed)
   {
 
+    
 
     FVector ForwardPlayer = GetOwner()->GetActorForwardVector();
     ForwardPlayer.Normalize();
@@ -108,7 +109,10 @@ void UShootAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType,
   {
     Shoot(IsPressed);
   }
-
+  else if (!IsPressed) {
+      PlayerStopShooting.Broadcast();
+  }
+  
 }
 
 
@@ -152,7 +156,7 @@ void UShootAbilityComponent::ShootImpactCheck(FVector ShootDirection)
   {
     ShowShootEffectComponent(ShootDirection, LineStart, Hit);
 
-    ShowHitEffect(Hit);
+    ShowHitEffect(ShootDirection, LineStart, Hit);
 
     ActionsTriggeredByHit(Hit);
     PlayerShooting.Broadcast();
@@ -166,11 +170,12 @@ void UShootAbilityComponent::ShootImpactCheck(FVector ShootDirection)
 
       ShowShootEffectComponent(ShootDirection, LineStart, Hit);
 
-      ShowHitEffect(Hit);
+      ShowHitEffect(ShootDirection, LineStart, Hit);
       PlayerShooting.Broadcast();
+      //PlayShootAnimation();
     }
   }
-
+  
 }
 
 void UShootAbilityComponent::ShowShootEffectComponent(FVector ShootDirection, FVector LineStart, FHitResult Hit)
@@ -184,11 +189,18 @@ void UShootAbilityComponent::ShowShootEffectComponent(FVector ShootDirection, FV
   }
 }
 
-void UShootAbilityComponent::ShowHitEffect(FHitResult Hit) const
+void UShootAbilityComponent::ShowHitEffect(FVector ShootDirection, FVector LineStart, FHitResult Hit) const
 {
   if (HitEffect && IsValid(Hit.GetActor()) && !GameMode->EntityManager->bDeactivateVFX)
   {
-    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, Hit.GetActor()->GetActorLocation());
+    //UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, Hit.GetActor()->GetActorLocation());
+    UNiagaraComponent* HitEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, LineStart + Hit.Distance * ShootDirection);
+    HitEffectComponent->SetVariableFloat(FName("R"), Color.R);
+    HitEffectComponent->SetVariableFloat(FName("G"), Color.G);
+    HitEffectComponent->SetVariableFloat(FName("B"), Color.B);
+    HitEffectComponent->SetVariableFloat(FName("A"), Color.A);
+    HitEffectComponent->SetVariableLinearColor(FName("Color"), Color);
+    
   }
 }
 

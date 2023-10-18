@@ -51,6 +51,6 @@ public:
 
   int32 NumActiveActorsOfClass(TSubclassOf<AActor> Class);
 
-  bool CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32 OverrideMax = -1);
+  bool CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32& NumToReachMax, int32 OverrideMax = -1);
 
 };

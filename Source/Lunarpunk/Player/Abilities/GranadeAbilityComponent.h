@@ -9,6 +9,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FThrowGrenade);
+
 /**
  *
  */
@@ -23,11 +24,16 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
         UAudioComponent* AudioComponent;
 
+    
+
     UPROPERTY(EditAnywhere, Category = "Debug")
         bool bDrawDebugSphere = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
         float DrawTime = 2.0f;
+    UPROPERTY(EditAnywhere, Category = "Effect location")
+        float Height = 100.0f;
+   
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         /*Force that will apply to the enemy when hitted*/
@@ -36,6 +42,24 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         /*Force that will apply to the enemy when hitted*/
         float ThrustImpactForceWall = 0.0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      float UpDownShakeSpeed = 0.2;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      float RightLeftShakeSpeed = 0.1;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      float UpDownAngle = 1.0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      float RightLeftAngle = 1.0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      float ShakeDuration = 1.0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Config|Shake Effect")
+      bool bShouldVibrate = true;
 
 
 	virtual void Initialize(ALunarPunkPlayerController* _PlayableController, APlayableCharacter* _PlayableCharacter) override;

@@ -271,7 +271,15 @@ void AProjectileTurret::UpgradeTurret(FUpgradesDataStruct* Upgrade, int Quantity
       case EUpgradeType::Cadence:
       {
         MinShootTimeRange -= (MinShootTimeRange * IncreaseOfUpgrade * Quantity);
+        if (MinShootTimeRange < 0.01f)
+        { 
+            MinShootTimeRange = 0.01f;
+        }
         MaxShootTimeRange -= (MaxShootTimeRange * IncreaseOfUpgrade * Quantity);
+        if (MaxShootTimeRange < 0.01f)
+        {
+            MaxShootTimeRange = 0.01f;
+        }
         UpdateFireRate();
         //RestartTimer();
         break;

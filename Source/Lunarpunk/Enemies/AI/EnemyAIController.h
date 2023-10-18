@@ -12,6 +12,7 @@
 class UCrowdFollowingComponent;
 class ALunarPunkGameMode;
 class UEnemyTargetPoints;
+class ATurret;
 /**
  *
  */
@@ -21,7 +22,7 @@ class LUNARPUNK_API AEnemyAIController : public AAIController
   GENERATED_BODY()
 
 public:
- 	AEnemyAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+  AEnemyAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
   //AEnemyAIController(const FObjectInitializer& ObjectInitializer);
 
   UPROPERTY(EditAnywhere, Category = "Enemy | AI")
@@ -72,8 +73,7 @@ public:
 
   UFUNCTION(BlueprintCallable)
     void AssignETP(UEnemyTargetPoints* EtpToEnemy);
-  UFUNCTION()
-    void RemoveETP();
+
   UFUNCTION()
     void DeleteBBValues();
 
@@ -86,7 +86,8 @@ private:
   bool IsAnyTurretAvailable(bool& bValue1);
   void SetPlayerAsTarget();
   void SetTurretAsTarget(AActor*& Target, bool& bTurretFound);
-
+  ATurret* FindTurretWithFreeETP(TArray<ATurret*> Turrets);
+  void ShuffleArray(TArray<ATurret*>& myArray);
 protected:
   virtual void BeginPlay() override;
 

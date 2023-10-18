@@ -63,7 +63,7 @@ void AZoneTrigger::BeginPlay()
 
   if (IsValid(FogEffect))
   {
-    FogEffect->SetVisibility(false);
+    FogEffect->SetVisibility(bPersistentFog);
   }
 
   ForkComponent->CloseDoors();
@@ -93,7 +93,7 @@ void AZoneTrigger::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 void AZoneTrigger::DeactivateZoneTrigger()
 {
   //Notify that the trigger has been overlapped.
-  TriggerActivated.Broadcast();
+  TriggerActivated.Broadcast(bDelaySpawnersIfOverlapZoneTrigger, DelaySpawnersGetActivated);
 
   //Deactivate the collision and the fog effect.
   ZoneTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);

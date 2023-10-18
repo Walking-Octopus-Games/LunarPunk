@@ -36,7 +36,7 @@ void UEnemyTargetPoints::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 bool UEnemyTargetPoints::IsOcuppied()
 {
-  if (OwnerTurret->State == ETurretState::Deactivated || OwnerTurret->State == ETurretState::PickedUp)
+  if (OwnerTurret->State == ETurretState::Deactivated || OwnerTurret->State == ETurretState::PickedUp || OwnerTurret->State == ETurretState::Repairing)
   {
     return true;
   }

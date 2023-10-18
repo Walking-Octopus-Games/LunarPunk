@@ -14,6 +14,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "DestructibleComponent.h"
 #include "Player/PlayableCharacter.h"
+#include "Player/CameraManager.h"
 #include "Utilities/UtilitiesLunarpunk.h"
 #include "Components/AudioComponent.h"
 #include "Enemies/BreakableWall.h"
@@ -48,12 +49,21 @@ void UGranadeAbilityComponent::ThrowAbility()
 
         if (GetOwner())
         {
-            FVector SparksOrigin = PlayableCharacter->GetActorLocation();
-            SparksOrigin.Z -= 100.0f;
-            SpawnNiagaraEffect(SparksOrigin);
+            FVector SparksOrigin = PlayableCharacter->GetActorLocation().GetSafeNormal();
+                //
+            SparksOrigin.Z -= Height;
+            ThrowGrenadeEvent.Broadcast();
+            
+
+            //SpawnNiagaraEffect(SparksOrigin);
             PlayableCharacter->AbilityCollider->GetOverlappingActors(EnemiesInRange, ABasicEnemy::StaticClass());
 
             PlayableCharacter->AbilityCollider->GetOverlappingActors(WallsInRange, ABreakableWall::StaticClass());
+
+            FTimerHandle TimerShake;
+            GameMode->CameraManager->StartShakingCamera(UpDownShakeSpeed, RightLeftShakeSpeed, UpDownAngle, RightLeftAngle, bShouldVibrate);
+            
+            GetWorld()->GetTimerManager().SetTimer(TimerShake, this, &UGranadeAbilityComponent::StopAbility, ShakeDuration, false);
 
             for (auto& Class : WallsInRange) 
             {
@@ -140,16 +150,9 @@ void UGranadeAbilityComponent::ThrowAbility()
 
 void UGranadeAbilityComponent::SpawnNiagaraEffect(FVector ExplosionOriginLocation)
 {
-  if (ExplosionEffect)
-  {
-    UNiagaraComponent* SparkEffectComponent;
+ 
 
-    SparkEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-      this,
-      ExplosionEffect,
-      ExplosionOriginLocation
-    );
-  }
+  
 
 }
 
@@ -175,6 +178,7 @@ void UGranadeAbilityComponent::DestroyWall()
 
 void UGranadeAbilityComponent::StopAbility()
 {
+  GameMode->CameraManager->StopShakingCamera();
 }
 
 

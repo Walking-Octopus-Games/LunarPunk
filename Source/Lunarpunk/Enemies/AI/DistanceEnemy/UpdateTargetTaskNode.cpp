@@ -122,19 +122,56 @@ ATurret* UUpdateTargetTaskNode::ChooseBestTarget(const ADistanceEnemy* OriginAct
 				UHealthComponent* HealthComponent = Target->FindComponentByClass<UHealthComponent>();
 				if (HealthComponent && HealthComponent->GetActualHealth() > 0)
 				{
+
 					if (!BestTarget)
 					{
 						BestTarget = Target;
 					}
 					else
 					{
-						UHealthComponent* HealthComponentCurrentTarget = BestTarget->FindComponentByClass<UHealthComponent>();
-						if (HealthComponentCurrentTarget && HealthComponentCurrentTarget->GetActualHealth() < HealthComponent->GetActualHealth())
+						if (OriginActor->TargetSelectionMode == ETargetSelectionMode::MinLife)
 						{
-							BestTarget = Target;
+
+							UHealthComponent* HealthComponentCurrentTarget = BestTarget->FindComponentByClass<UHealthComponent>();
+							if (HealthComponentCurrentTarget && HealthComponentCurrentTarget->GetActualHealth() < HealthComponent->GetActualHealth())
+							{
+								BestTarget = Target;
+							}
+						}
+
+						if (OriginActor->TargetSelectionMode == ETargetSelectionMode::MaxLife)
+						{
+
+							UHealthComponent* HealthComponentCurrentTarget = BestTarget->FindComponentByClass<UHealthComponent>();
+							if (HealthComponentCurrentTarget && HealthComponentCurrentTarget->GetActualHealth() > HealthComponent->GetActualHealth())
+							{
+								BestTarget = Target;
+							}
+						}
+
+						if (OriginActor->TargetSelectionMode == ETargetSelectionMode::MinDistance)
+						{
+							float DistanceToBestTarget = (BestTarget->GetActorLocation() - OriginActor->GetActorLocation()).SizeSquared();
+							float DistanceToTarget = (Target->GetActorLocation() - OriginActor->GetActorLocation()).SizeSquared();
+							if (DistanceToTarget < DistanceToBestTarget)
+							{
+								BestTarget = Target;
+							}
+						}
+
+						if (OriginActor->TargetSelectionMode == ETargetSelectionMode::MaxDistance)
+						{
+							float DistanceToBestTarget = (BestTarget->GetActorLocation() - OriginActor->GetActorLocation()).SizeSquared();
+							float DistanceToTarget = (Target->GetActorLocation() - OriginActor->GetActorLocation()).SizeSquared();
+							if (DistanceToTarget > DistanceToBestTarget)
+							{
+								BestTarget = Target;
+							}
 						}
 					}
+
 				}
+				
 			}
 			
 		}

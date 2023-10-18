@@ -11,6 +11,7 @@
 
 class UFMODEvent;
 struct FFMODEventInstance;
+class AConquestZone;
 
 UCLASS()
 class LUNARPUNK_API AEnemySpawner : public AActor, public IHowManySpawns
@@ -105,10 +106,13 @@ public:
   };
 
   UFUNCTION(BlueprintCallable)
-  void ActivateSpawner(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen);
+  void ActivateSpawner(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen, AConquestZone* ConquestZoneOwner);
 
   UFUNCTION(BlueprintCallable)
   void DeactivateSpawner();
+
+  UFUNCTION()
+  void UpdateMaxEnemiesInScreen(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen);
 
 
   UPROPERTY(EditAnywhere, Category = "Spawner|Sound")

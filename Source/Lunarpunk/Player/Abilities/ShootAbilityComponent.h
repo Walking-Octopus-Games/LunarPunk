@@ -24,8 +24,7 @@ class LUNARPUNK_API UShootAbilityComponent : public UAbilityBaseComponent
 public:
   UShootAbilityComponent();
 
-
-
+ 
   //Shoot sound
   UPROPERTY(EditAnywhere, category = "Sound & Effects | Sound | Shot")
     USoundBase* ShootSound;
@@ -33,6 +32,9 @@ public:
   //Hit effect spawn when Shoot hit shomething
   UPROPERTY(EditAnywhere, category = "Sound & Effects | Effects | Shot")
     UNiagaraSystem* HitEffect;
+  
+  UPROPERTY(EditAnywhere, category = "Sound & Effects | Effects | Shot")
+    FLinearColor Color;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Shot")
     float ShotRadius = 8.0f;
@@ -52,8 +54,16 @@ public:
   UPROPERTY(EditAnywhere, category = "Player")
     bool IsPressed = false;
 
-  UPROPERTY()
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Shooting")
     FPlayerShooting PlayerShooting;
+
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Shooting")
+    FPlayerShooting PlayerStopShooting;
+
+  UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+      void PlayShootAnimation();
+
+  
 
   UPROPERTY()
     FPlayerMakeDamage PlayerMakeDamage;
@@ -90,7 +100,7 @@ private:
     void ShowShootEffectComponent(FVector ShootDirection, FVector LineStart, FHitResult Hit);
 
   UFUNCTION()
-    void ShowHitEffect(FHitResult Hit) const;
+    void ShowHitEffect(FVector ShootDirection, FVector LineStart, FHitResult Hit) const;
 
   UFUNCTION()
     void ActionsTriggeredByHit(const FHitResult& Hit) const;

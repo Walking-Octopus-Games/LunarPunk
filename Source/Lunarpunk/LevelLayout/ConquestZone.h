@@ -6,9 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "ConquestZone.generated.h"
 
+using TypeDelegate = const TMap<TSubclassOf<AActor>, int32>&;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FMaxEnemiesInConquestZoneChanged, TypeDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FShowPlayerCanShoot);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHidePlayerCanShoot);
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FZoneCompleted, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FZoneStarted, int32);
 
@@ -34,13 +36,29 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 Index = 1;
 
+	//Max enemies in screen of each class in the area asociated to this  conquest zone. (-1 means no limit)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<TSubclassOf<AActor>, int32> MaxEnemiesInScreen;
+
+	UPROPERTY(EditAnywhere)
+	bool bLimitEnemiesNumberWhenTurretsAreDeath = true;
+
+	//Number of remaining alive turrets to change the max number of enemies in screen. 0 Means that this number will change when every turret is death.
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "bLimitEnemiesNumberWhenTurretsAreDeath", EditConditionHides))
+	int32 AliveTurretsToChangeMaxEnemiesInScreen = 0;
+
+	//Number of turrets wich should be alive to restore the regular max number of enemies in screen. (Note: this value must be greater than AliveTurretsToChangeMaxEnemiesInScreen).
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "bLimitEnemiesNumberWhenTurretsAreDeath", EditConditionHides))
+	int32 AliveTurretsToRestoreRegularEnemiesNumber = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLimitEnemiesNumberWhenTurretsAreDeath", EditConditionHides))
+	TMap<TSubclassOf<AActor>, int32> MaxEnemiesInScreenWhenTurretsAreDeath;
 
 
 	//Time to show the remaining time.
 	UPROPERTY(EditAnywhere)
 	int32 TimeToShowRestingTime = 10.4f;
+
 
 	//Num of turrets placed in asociated turrets places. 
 	UPROPERTY(VisibleAnywhere)
@@ -71,6 +89,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable)
 	FHidePlayerCanShoot HidePlayerCanShoot;
 
+
+	FMaxEnemiesInConquestZoneChanged MaxEnemiesInConquestZoneChanged;
+
+
 	//Spawners asociated to this conquest zone.
 	UPROPERTY(VisibleAnywhere)
 	TArray<class AEnemySpawner*> EnemySpawners;
@@ -85,8 +107,14 @@ public:
 private:
 
 	
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	int32 TurretsInLevel = 0;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	int32 TurretsDeathInLevel = 0;
 
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	TMap<TSubclassOf<AActor>, int32> InitialMaxEnemiesInScreen;
 
 	//Handle del Timer
 	FTimerHandle TimerHandle;
@@ -130,6 +158,11 @@ public:
 	UFUNCTION()
 	void OnTurretRetired();
 
+	UFUNCTION()
+	void OnTurretDeath();
+
+	UFUNCTION()
+	void OnTurretReactivated();
 
 	//Functions to handle if the player can perform the shoot or not.
 	void ActivatePlayerCanChargeShoot();
@@ -184,6 +217,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowTimeToNextWaveInHUD();
+
+	UFUNCTION()
+	void ManageZoneTriggerOverlapped(bool ShouldDelay, float DelayTime);
 
 	UFUNCTION()
 	void ForceBeginEnemiesSpawners();

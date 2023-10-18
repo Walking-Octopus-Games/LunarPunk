@@ -10,6 +10,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "NiagaraComponent.h"
+#include "Turrets/AI/MovementTurretComponent.h"
 
 
 // Sets default values
@@ -18,9 +19,11 @@ APortal::APortal()
   // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
   MeshRootComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshRootComponent"));
+  MeshRootComponent->SetupAttachment(RootComponent);
   BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
   BoxComponent->SetupAttachment(RootComponent);
   DestroyEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DestroyEffectComponent"));
+  DestroyEffectComponent->SetupAttachment(RootComponent);
   FloatingMovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Floating Movement Component"));
 }
 
@@ -30,6 +33,14 @@ void APortal::BeginPlay()
   Super::BeginPlay();
 
   AIController = Cast<AAIController>(GetController());
+
+  if (IsValid(AIController))
+  {
+    AIController->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &APortal::MoveCompleted);
+
+  }
+
+
   DestroyEffectComponent->DeactivateImmediate();
   PortalAudioEventInstance = UFMODBlueprintStatics::PlayEventAttached(PortalAudioEvent, MeshRootComponent, NAME_None, GetActorLocation(), EAttachLocation::SnapToTarget, true, true, true);
 
@@ -67,7 +78,8 @@ bool APortal::DestroyPortal()
         APortalWaypoint* Point = Waypoints[Hits];
         if (IsValid(Point) && AIController)
         {
-          AIController->MoveToActor(Point);
+            AIController->MoveToLocation(Point->GetActorLocation());
+            //BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         }
       }
       PortalDestroy.Broadcast(false, Index);
@@ -75,6 +87,7 @@ bool APortal::DestroyPortal()
     }
     else
     {
+      isMainPortal = true; 
       PortalDestroy.Broadcast(true, Index);
       StopAudio();
       bDestroy = true;
@@ -92,6 +105,11 @@ bool APortal::DestroyPortal()
   }
 
   return bDestroy;
+}
+
+void APortal::MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& PathFollowingResult)
+{
+    //BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void APortal::BeginDestroy()

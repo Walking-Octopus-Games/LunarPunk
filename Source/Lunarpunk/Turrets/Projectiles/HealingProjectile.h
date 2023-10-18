@@ -50,4 +50,6 @@ public:
 private:
 
   TArray<AActor*> OverlapedActors;
+
+  void ShowShootEffect();
 };

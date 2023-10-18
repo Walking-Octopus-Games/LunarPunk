@@ -94,5 +94,7 @@ public:
   UFUNCTION(BlueprintCallable)
     bool DestroyPortal();
 
+  void MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& PathFollowingResult);
+
   virtual void BeginDestroy() override;
 };

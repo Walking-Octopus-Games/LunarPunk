@@ -21,6 +21,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSkipCinematic, bool, IsPressed);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActiveAbility, bool, IsPressed);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInputControllerChange, bool, IsMouse);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSkipTutorial);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGodMode);
@@ -143,6 +145,9 @@ public:
 
   UFUNCTION(BlueprintCallable, Category = "PlayerController")
     void LeftDirectionalPad();
+
+  UFUNCTION(BlueprintCallable, Category = "PlayerController")
+  void DeactivateMovement();
 
   UFUNCTION(BlueprintCallable, Category = "PlayerController")
     void DeactivateAbbilities();
@@ -309,10 +314,13 @@ public:
     FPlayerIsMoving PlayerIsMovingEvent;
 
   UPROPERTY(BlueprintAssignable)
+  FInputControllerChange InputControllerChange;
+
+  UPROPERTY(BlueprintAssignable)
     FPlayerMovementStopped PlayerMovementStoppedEvent;
 
   UPROPERTY(VisibleAnywhere)
-    bool IsDeactivated;
+    bool bIsMovementDeactivated;
 
   UPROPERTY(EditAnywhere)
     float ControlMoveTurretsCooldownTime = 0.2;
@@ -348,6 +356,11 @@ private:
   float MaxVel = 1;
   FRotator PlayerRotation;
   FRotator GoalRotation;
+
+  bool bGranadeIsActive = false;
+  bool bShieldIsActive = false;
+  bool bSparkIsActive = false;
+  bool bTrapAbilityIsActive = false;
 
 };
 

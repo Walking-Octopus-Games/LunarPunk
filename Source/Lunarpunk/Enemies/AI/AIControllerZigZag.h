@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NavigationSystem.h"
 #include "AIController.h"
 
 #include "Player/PlayableCharacter.h"
 #include "AIControllerZigZag.generated.h"
 
+
+class ALunarPunkGameMode;
 /**
  * 
  */
@@ -19,8 +22,14 @@ class LUNARPUNK_API AAIControllerZigZag : public AAIController
 public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy | AI")
 		void UpdateNextTargetPoint();
+	UPROPERTY()
+		ALunarPunkGameMode* LPGameMode;
 
+	UPROPERTY()
+		UNavigationSystemV1* NavSystem;
 
+	UPROPERTY()
+		UBlackboardComponent* PBlackboardComponent;
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "OutsideTarget")
 		FVector OutsideDestination(FVector TargetVecto) const;
@@ -34,6 +43,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Location)
 		FVector TLocation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Location)
+		bool PlayerisNewTarget = false;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Location)
 		FVector PLocation;
@@ -52,6 +64,10 @@ public:
 	void SetBlackBoardPlayerLocation(UBlackboardComponent* PBlackboardComponent) const;
 
 	void OnPossess(APawn* InPawn) override;
+
+	void SetPlayerAsTarget();
+
+	void BeginPlay();
 
 
 

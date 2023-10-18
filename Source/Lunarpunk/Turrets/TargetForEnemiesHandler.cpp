@@ -39,7 +39,26 @@ void UTargetForEnemiesHandler::TurretDeactivated()
           {
             if (BasicController->ETP == EnemyTargetPoints)
             {
-              BasicController->RemoveETP();
+              BasicController->DeleteBBValues();
+
+
+              if (IsValid(BasicController->PBlackboardComponent))
+              {
+                UObject* TurretObject = BasicController->PBlackboardComponent->GetValueAsObject(FName("TurretMovingPersistance"));
+                if (IsValid(TurretObject))
+                {
+                  ATurret* TurretMovingPersistance = Cast<ATurret>(TurretObject);
+                  if (IsValid(TurretMovingPersistance))
+                  {
+                    if (GetOwner() == TurretMovingPersistance)
+                    {
+                      BasicController->PBlackboardComponent->ClearValue(FName("TurretMovingPersistance"));
+                    }
+                  }
+                }
+
+              }
+              //BasicController->PBlackboardComponent->ClearValue("TurretMovingPersistance");
             }
           }
         }
@@ -57,8 +76,20 @@ void UTargetForEnemiesHandler::BeginOverlap(UPrimitiveComponent* OverlappedCompo
 {
   if (IsValid(OtherActor) && OtherActor->IsA(ABasicEnemy::StaticClass()) && OtherComp->IsA(UCapsuleComponent::StaticClass()))
   {
-    EnemiesInsideTheArea.Add(Cast<ABasicEnemy>(OtherActor));
-    GetETPAndAssignItToAFreeEnemy();
+    ABasicEnemy* BasicEnemy = Cast<ABasicEnemy>(OtherActor);
+
+    if (IsValid(BasicEnemy))
+    {
+      if (IsValid(BasicEnemy->GetController()))
+      {
+        AEnemyAIController* BasicController = Cast<AEnemyAIController>(BasicEnemy->GetController());
+        if (IsValid(BasicController))
+        {
+          EnemiesInsideTheArea.Add(BasicEnemy);
+          GetETPAndAssignItToAFreeEnemy();
+        }
+      }
+    }
   }
 }
 
@@ -128,15 +159,27 @@ void UTargetForEnemiesHandler::EndOverlap(UPrimitiveComponent* OverlappedCompone
       // Assign new target to enemy
       ABasicEnemy* Enemy = Cast<ABasicEnemy>(OtherActor);
       AEnemyAIController* EnemyController = Cast<AEnemyAIController>(Enemy->GetController());
-      if (IsValid(EnemyController) && Enemy->HealthComponent->GetActualHealth() > 0.f)
+      if (IsValid(EnemyController) && Enemy->HealthComponent->GetActualHealth() > 0.f && OwnerTurret->State != ETurretState::Deactivated)
       {
-        EnemyController->RemoveETP();
+        EnemyController->DeleteBBValues();
       }
       EnemiesInsideTheArea.Remove(Enemy);
       GetETPAndAssignItToAFreeEnemy();
     }
   }
 
+}
+
+bool UTargetForEnemiesHandler::IsAnyETPFree()
+{
+  for (UEnemyTargetPoints* EnemyTargetPoints : OwnerTurret->EnemyTargetPoints)
+  {
+    if (!EnemyTargetPoints->IsOcuppied())
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Called when the game starts

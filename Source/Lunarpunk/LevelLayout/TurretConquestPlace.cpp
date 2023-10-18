@@ -5,6 +5,8 @@
 #include "Turrets/Turret.h"
 #include "Components/BoxComponent.h"
 #include "Turrets/AI/MovementTurretComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 
 // Sets default values
@@ -32,12 +34,14 @@ void ATurretConquestPlace::BeginPlay()
     TurretPlaceCollision->OnComponentEndOverlap.AddDynamic(this, &ATurretConquestPlace::OnEndOverlap);
   }
 
-  PlaceMesh = FindComponentByClass<UStaticMeshComponent>();
+  PlaceMesh = Cast<UStaticMeshComponent>(GetDefaultSubobjectByName(FName("PlaceBase")));
 
   if (!IsValid(PlaceMesh))
   {
     UE_LOG(LogTemp, Warning, TEXT("TurretConquestPlace.cpp: mesh not found"));
   }
+
+  ActivatedEffect = Cast<UNiagaraComponent>(GetDefaultSubobjectByName(FName("ActivatedVisualEffect")));
 
 
 
@@ -74,6 +78,10 @@ void ATurretConquestPlace::OnBeginOverlap(UPrimitiveComponent* OverlappedCompone
 
     TurretPlaced.Broadcast();
     ShowZoneActivatedEffect();
+    if (ActivatedEffect)
+    {
+        ActivatedEffect->ActivateSystem();
+    }
     RemoveTurretGhost();
     TurretPlacedReference = Cast<ATurret>(OtherActor);
     if (TurretPlacedReference->State == ETurretState::Moving)
@@ -106,6 +114,10 @@ void ATurretConquestPlace::OnEndOverlap(UPrimitiveComponent* OverlappedComponent
   {
     TurretRetired.Broadcast();
     RemoveZoneActivatedEffect();
+    if (ActivatedEffect)
+    {
+        ActivatedEffect->DeactivateImmediate();
+    }
     ShowTurretGhost();
     TurretPlacedReference->TurretDeath.Remove(this, FName("PlacedTurretDeath"));
     TurretPlacedReference->TurretReactivated.Remove(this, FName("PlacedTurretReactivated"));
@@ -124,7 +136,12 @@ void ATurretConquestPlace::PlacedTurretDeath()
 {
   //GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, "Murio torreta posicionada");
   TurretRetired.Broadcast();
-  RemoveZoneActivatedEffect();
+  SetTurretDeathBaseMaterial(true);
+  //RemoveZoneActivatedEffect();
+  if (ActivatedEffect)
+  {
+      ActivatedEffect->DeactivateImmediate();
+  }
   bGoingToCenter = false;
 }
 
@@ -133,6 +150,11 @@ void ATurretConquestPlace::PlacedTurretReactivated()
   //GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, "Revivio torreta posicionada");
   TurretPlaced.Broadcast();
   ShowZoneActivatedEffect();
+  SetTurretDeathBaseMaterial(false);
+  if (ActivatedEffect)
+  {
+      ActivatedEffect->ActivateSystem();
+  }
   bGoingToCenter = true;
 }
 
@@ -149,6 +171,10 @@ void ATurretConquestPlace::CloseConquestPlace()
   }
 
   RemoveZoneActivatedEffect();
+  if (ActivatedEffect)
+  {
+      ActivatedEffect->DeactivateImmediate();
+  }
   TurretPlaceCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -157,6 +183,11 @@ void ATurretConquestPlace::CloseConquestPlace()
 void ATurretConquestPlace::DisableTurretPlace()
 {
   RemoveZoneActivatedEffect();
+  if (ActivatedEffect)
+  {
+      ActivatedEffect->DeactivateImmediate();
+  }
+  
   TurretPlaceCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
   RemoveTurretGhost();
 }

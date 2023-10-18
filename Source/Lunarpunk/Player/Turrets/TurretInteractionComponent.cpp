@@ -14,6 +14,8 @@
 #include "Managers/UpgradesManager.h"
 #include "Managers/GameFrameworks/LunarPunkGameMode.h"
 #include "Player/LunarPunkPlayerController.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Player/PlayableCharacter.h"
 #include "RewardsAndUpgrades/GetRewardsComponent.h"
 #include "Turrets/Turret.h"
@@ -41,6 +43,20 @@ void UTurretInteractionComponent::TickComponent(float DeltaTime, ELevelTick Tick
   {
     GetNearestTurret();
   }
+
+  if (DeactivateRotationDuringReparing == true && InteractedTurret) {
+    
+      
+      //;
+      
+      FVector  Direction = InteractedTurret->GetActorLocation() - GetOwner()->GetActorLocation() + FVector(0.0f , 0.0f , HeightToRepair) ;
+      FRotator NewRotation = Direction.Rotation();
+      GetOwner()->SetActorRotation(NewRotation);
+
+
+  }
+
+
 }
 
 void UTurretInteractionComponent::OnOverlapBegin(
@@ -184,7 +200,8 @@ void UTurretInteractionComponent::TakeTurret()
   {
     InteractedTurret->TurnOffOutline();
     InteractedTurret->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetIncludingScale);
-    InteractedTurret->SetActorRelativeLocation(FVector(0, 0, 200));
+    InteractedTurret->SetActorRelativeLocation(FVector(0, 0, HeightToSetTurret));
+    PlayerStartTakeTurret.Broadcast();
 
     if (IsValid(PlayableCharacter) && IsValid(PlayableCharacter->TurretPositionIndicator))
     {
@@ -231,6 +248,7 @@ void UTurretInteractionComponent::SetTurret()
 
   NewPositionTurret.Z = Navmeshlocation.Location.Z;
 
+  PlayerStopTakeTurret.Broadcast();
   InteractedTurret->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
   InteractedTurret->PlaceTurret();
   InteractedTurret->SetActorLocation(NewPositionTurret);
@@ -248,11 +266,34 @@ void UTurretInteractionComponent::SetTurret()
 void UTurretInteractionComponent::TreatTurret()
 {
   
+
   if (Interact(true) && IsValid(PlayableCharacter->RewardsComponent) && (InteractedTurret->State == ETurretState::Set || InteractedTurret->State == ETurretState::Conquest || InteractedTurret->State == ETurretState::Deactivated))
   {
     if (GameMode->GetPlatesManager()->GetCurrentPlates() >= InteractedTurret->CostRepair())
     {
+      DeactivateRotationDuringReparing = true;
+
       InteractedTurret->StartRepairing();
+
+      PlayerStartReparingTurret.Broadcast();
+
+      UCapsuleComponent* SKMesh = PlayableCharacter->GetCapsuleComponent();
+      
+      /*
+      if (SKMesh && SKMesh->GetBodyInstance())
+      {
+          
+          SKMesh->BodyInstance.bLockXRotation=true;
+          //->bLockXRotation = true;
+          SKMesh->GetBodyInstance()->bLockYRotation = true;
+          SKMesh->GetBodyInstance()->bLockYTranslation = true;
+          SKMesh->GetBodyInstance()->bLockXRotation = true;
+          SKMesh->GetBodyInstance()->bLockZRotation = true;
+          SKMesh->GetBodyInstance()->SetDOFLock(EDOFMode::SixDOF);
+         
+      }
+      */
+
     }
     else
     {
@@ -265,7 +306,10 @@ void UTurretInteractionComponent::StopTreatingTurret()
 {
   if (IsValid(InteractedTurret))
   {
+    DeactivateRotationDuringReparing = false;
     InteractedTurret->InterruptRepair();
+    PlayerStopReparingTurret.Broadcast();
+    
   }
   Interact(false);
 }

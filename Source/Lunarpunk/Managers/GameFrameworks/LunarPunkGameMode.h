@@ -134,7 +134,7 @@ private:
     void InitEntityManager(APlayableCharacter* PlayableCharacter, ALunarPunkPlayerController* PlayerController);
 
   UFUNCTION(BlueprintCallable)
-    void InitUpgradesManager(ALunarPunkPlayerController* PlayerController);
+    void InitUpgradesManager(ALunarPunkPlayerController* PlayerController, UEntityManager* EntityManagerReference);
 
   UFUNCTION()
     void InitPlatesManager(ALunarPunkPlayerController* PlayerController, UEntityManager* EntityManagerReference);

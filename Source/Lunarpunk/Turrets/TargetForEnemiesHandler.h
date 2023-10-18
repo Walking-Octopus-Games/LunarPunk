@@ -27,7 +27,7 @@ public:
 
   UFUNCTION()
     void Initialize(ATurret* Turret);
-    UFUNCTION()
+  UFUNCTION()
     void GetETPAndAssignItToAFreeEnemy();
 protected:
 
@@ -46,10 +46,11 @@ protected:
     void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 
+
 public:
   // Called every frame
   virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+  bool IsAnyETPFree();
   //UPROPERTY(EditAnywhere, BlueprintReadWrite)
   //  USphereComponent* AreaForEnemies;
 

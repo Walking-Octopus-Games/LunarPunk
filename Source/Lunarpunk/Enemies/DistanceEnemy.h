@@ -11,6 +11,18 @@ class UNiagaraComponent;
 class APool;
 class UFMODEvent;
 class UFMODAudioComponent;
+
+UENUM()
+enum class ETargetSelectionMode : uint8
+{
+	MaxLife,
+	MinLife,
+	MaxDistance,
+	MinDistance
+
+};
+
+
 /**
  * 
  */
@@ -31,6 +43,9 @@ public:
 	//Projectile type to shoot
 	UPROPERTY(EditAnywhere, Category = "Config.")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Config.")
+	ETargetSelectionMode TargetSelectionMode;
 
 	//Distance in which the enemy should shot the player instead of the turrets
 	UPROPERTY(EditAnywhere, Category = "Config.")

@@ -329,8 +329,8 @@ void ABasicEnemy::AttachZigZagPawn(AZigZagPawn* zigzagpawn)
       true
     );
 
-    DamageRangeCollision->AttachToComponent(MeshComponent, Rules, FName("ball_l"));
-
+    DamageRangeCollision->AttachToComponent(MeshComponent, Rules, FName("Bip001-L-Finger0Nub"));
+    DamageRangeCollision->AttachToComponent(MeshComponent, Rules, FName("Bip001-R-Finger0Nub"));
   }
 
 }
@@ -373,17 +373,20 @@ void ABasicEnemy::DeactivateForDeathAnim()
       EnemyAvoidSphereCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
     AEnemyAIController* EnemyAIController = Cast<AEnemyAIController>(GetController());
-    if (EnemyAIController)
+    if (IsValid(EnemyAIController))
     {
-      EnemyAIController->RemoveETP();
+      EnemyAIController->DeleteBBValues();
       //EnemyAIController->PBlackboardComponent->ClearValue();
       //EnemyAIController->DeleteBBValues();
+      if (IsValid(EnemyAIController->PBlackboardComponent))
+      {
+        EnemyAIController->PBlackboardComponent->ClearValue("TurretMovingPersistance");
+      }
     }
     AICharacterController->StopMovement();
     AICharacterController->GetBrainComponent()->StopLogic(FString("Go to pool"));
     AICharacterController->GetBrainComponent()->Deactivate();
     AICharacterController->UnPossess();
-
 
   }
 
