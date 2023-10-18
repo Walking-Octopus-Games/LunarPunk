@@ -1,6 +1,6 @@
 # LunarPunk
 ## Gameplay video:
-https://www.youtube.com/watch?v=MBbs40GGjGU
+[https://www.youtube.com/watch?v=MBbs40GGjGU](https://www.youtube.com/watch?v=NX6QrqMngAg)
 
 ## Requirements:
 1. Unreal Engine 4.27: https://www.unrealengine.com/en-US/download
