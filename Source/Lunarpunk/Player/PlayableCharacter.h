@@ -133,6 +133,9 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UNiagaraComponent* AbilityEffectComponent;
 
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
+      UNiagaraComponent* GranadeEffectComponent;
+
   UPROPERTY()
     UDecalComponent* TurretPositionIndicator;
 

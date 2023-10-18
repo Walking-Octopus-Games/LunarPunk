@@ -12,6 +12,8 @@ class AForkDoor;
 class ATurretWaypoint;
 class AZoneTrigger;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FForkActivated);
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class LUNARPUNK_API UForkComponent : public UActorComponent
 {
@@ -34,6 +36,7 @@ public:
   void AssignTurretNewWaypoints();
 
   void ActivateForkComponent();
+  void SwitchPlayerTurretMovementAbility(bool Activate);
 
 
   UFUNCTION()
@@ -59,6 +62,9 @@ public:
     ATurretWaypoint* TargetWaypointToActivate;
 
   UPROPERTY(EditAnywhere)
+    ATurretWaypoint* TargetWaypointToAssignAsPrevious;
+
+  UPROPERTY(EditAnywhere)
     TArray<AForkDoor*> WayForkDoors;
 
   /*UPROPERTY(EditAnywhere)
@@ -66,8 +72,26 @@ public:
   UPROPERTY(EditAnywhere)
     TArray<AActor*> ChoosePathDecals;
 
+  UPROPERTY(EditAnywhere)
+    bool bTeleportTurretsToDoor = false;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bTeleportTurretsToDoor", EditConditionHides))
+    FVector OffsetFromFork = FVector::ZeroVector;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bTeleportTurretsToDoor", EditConditionHides))
+    float TurretsPaddingAmount = 50.0f;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bTeleportTurretsToDoor", EditConditionHides))
+    int32 TurretRows = 2;
+
+  UPROPERTY(BlueprintAssignable)
+    FForkActivated ForkActivated;
 
 
+
+private:
+
+  void MoveTurretsInFrontOfTheDoor();
 
 
 };

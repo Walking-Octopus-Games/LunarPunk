@@ -9,6 +9,27 @@
 
 
 USTRUCT(BlueprintType)
+struct LUNARPUNK_API FIndicationStruct
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+	FString Text;
+
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+	UTexture2D* Icon;
+
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+	UTexture2D* PCIcon;
+
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+	FString Text2;
+
+};
+
+USTRUCT(BlueprintType)
 struct LUNARPUNK_API FTutorialDataStruct
 {
 	GENERATED_USTRUCT_BODY()
@@ -22,6 +43,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
 		FString Description;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TArray<FIndicationStruct> Indications;
 
 	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
 		bool bIsVideo = true; 

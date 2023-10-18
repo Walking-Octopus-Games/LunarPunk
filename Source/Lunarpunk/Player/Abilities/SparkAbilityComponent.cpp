@@ -54,7 +54,6 @@ void USparkAbilityComponent::ThrowAbility()
 	if (AssertThrowAbility())
 	{
 		ThrowSparkleEvent.Broadcast();
-		SpawnLaunchSparkNiagaraEffect();
 		ThrowSparks();
 		Super::ThrowAbility();
 	}
@@ -214,6 +213,11 @@ void USparkAbilityComponent::DoBounce()
 			}
 		}
 
+		if (CurrentBouncess == 1 && NextActorsToBeSparksOrigin.Num() == 0)
+		{
+			SpawnLaunchSparkNiagaraEffect();
+		}
+
 		//Do the next bounce
 		if (CurrentBouncess < NumBouncess)
 		{
@@ -243,6 +247,7 @@ void USparkAbilityComponent::DoBounce()
 
 				return;
 			}
+
 		}
 	}
 

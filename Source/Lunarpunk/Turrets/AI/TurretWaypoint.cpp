@@ -38,23 +38,22 @@ void ATurretWaypoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
   {
     ATurret* Turret = Cast<ATurret>(OtherActor);
 
-    if (IsValid(Turret) && IsValid(Turret->TargetWaypoint) && Turret->TargetWaypoint == this)
+    if (IsValid(Turret) && IsValid(Turret->TargetWaypoint) /*&& Turret->TargetWaypoint == this*/)
     {
       if (IsValid(NextWaypoint))
       {
-        Turret->SetTargetWaypoint(NextWaypoint);
 
-        if (Turret->State != ETurretState::PickedUp && !NextWaypoint->IsActive)
+        Turret->SetTargetWaypoint(NextWaypoint);
+        if (!NextWaypoint->IsActive && Turret->State == ETurretState::Moving)
         {
           Turret->TurretMovementComponent->ForceLanding();
         }
-
       }
       else
       {
         if (!IsValid(NextWaypoint))
         {
-          if (Turret->State != ETurretState::PickedUp)
+          if (Turret->State == ETurretState::Moving)
           {
             Turret->TurretMovementComponent->ForceLanding();
           }

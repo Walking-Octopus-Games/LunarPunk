@@ -13,6 +13,7 @@
 #include "Enemies/IEnemy.h"
 #include "Player/Abilities/DestroyPortalAbilityComponent.h"
 #include "Player/Abilities/ShootAbilityComponent.h"
+#include "Turrets/Turret.h"
 
 
 // Sets default values
@@ -67,7 +68,7 @@ void AConquestZone::BeginPlay()
       if (IsValid(ZoneTriggerCasted) && ZoneTriggerCasted->IndexOwnerConquestZone == Index)
       {
         ZoneTriggersAsociated.Add(ZoneTriggerCasted);
-        ZoneTriggerCasted->TriggerActivated.AddDynamic(this, &AConquestZone::ForceBeginEnemiesSpawners);
+        ZoneTriggerCasted->TriggerActivated.AddDynamic(this, &AConquestZone::ManageZoneTriggerOverlapped);
       }
     }
 
@@ -117,6 +118,26 @@ void AConquestZone::BeginPlay()
 
     CurrentTimeToEndResting = RestingTime;
 
+
+
+    //Manage the enemies number when turrets die
+    TArray<AActor*> AllTurretsInLevel;
+    UGameplayStatics::GetAllActorsOfClass(World, ATurret::StaticClass(), AllTurretsInLevel);
+    ATurret* TurretCasted;
+
+    for (AActor* Turret : AllTurretsInLevel)
+    {
+        TurretCasted = Cast<ATurret>(Turret);
+        if (IsValid(TurretCasted))
+        {
+           
+            TurretCasted->TurretDeath.AddDynamic(this, &AConquestZone::OnTurretDeath);
+            TurretCasted->TurretReactivated.AddDynamic(this, &AConquestZone::OnTurretReactivated);
+            ++TurretsInLevel;
+        }
+    }
+
+    InitialMaxEnemiesInScreen = MaxEnemiesInScreen;
 
   }
 }
@@ -381,7 +402,7 @@ void AConquestZone::ActivateEnemySpawnersAsociated()
         //EnemySpawner->WavesData->Waves[0].TimeToStart = RestingTime;
         EnemySpawner->WavesData->Waves[0].TimeToStart = 0.1;
       }
-      EnemySpawner->ActivateSpawner(MaxEnemiesInScreen);
+      EnemySpawner->ActivateSpawner(MaxEnemiesInScreen, this);
     }
 
   }
@@ -428,4 +449,55 @@ void AConquestZone::DeactivateAllEnemiesInMap() const
       }
     }
   }
+}
+
+void AConquestZone::ManageZoneTriggerOverlapped(bool ShouldDelay, float DelayTime)
+{
+    if (ShouldDelay)
+    {
+        FTimerHandle TimerActivateSpawners;
+        GetWorld()->GetTimerManager().SetTimer(TimerActivateSpawners, this, &AConquestZone::ForceBeginEnemiesSpawners,DelayTime, false);
+    }
+    else
+    {
+        ForceBeginEnemiesSpawners();
+    }
+}
+
+
+void AConquestZone::OnTurretDeath()
+{
+    ++TurretsDeathInLevel;
+
+    if (TurretsDeathInLevel == TurretsInLevel- AliveTurretsToChangeMaxEnemiesInScreen)
+    {
+        
+        for (auto it = MaxEnemiesInScreen.begin(); it != MaxEnemiesInScreen.end(); ++it)
+        {
+            if (MaxEnemiesInScreen.Contains(it->Key))
+            {
+                it->Value = MaxEnemiesInScreenWhenTurretsAreDeath[it->Key];
+            }
+        }
+        MaxEnemiesInConquestZoneChanged.Broadcast(MaxEnemiesInScreen);
+    }
+}
+
+
+void AConquestZone::OnTurretReactivated()
+{
+    --TurretsDeathInLevel;
+
+    if (TurretsDeathInLevel == TurretsInLevel - AliveTurretsToRestoreRegularEnemiesNumber)
+    {
+        for (auto it = MaxEnemiesInScreen.begin(); it != MaxEnemiesInScreen.end(); ++it)
+        {
+            if (InitialMaxEnemiesInScreen.Contains(it->Key))
+            {
+                it->Value = InitialMaxEnemiesInScreen[it->Key];
+            }
+            
+        }
+        MaxEnemiesInConquestZoneChanged.Broadcast(MaxEnemiesInScreen);
+    }
 }

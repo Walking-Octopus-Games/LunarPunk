@@ -11,12 +11,14 @@
 #include "Player/PlayableCharacter.h"
 #include "RewardsAndUpgrades/Upgrade.h"
 #include "RewardsAndUpgrades/UpgradesData.h"
+#include "Managers/EntityManager.h"
+#include "Turrets/Turret.h"
 
 UUpgradesManager::UUpgradesManager()
 {
 }
 
-void UUpgradesManager::Initialize(ALunarPunkGameMode* LPGameMode, UUpgradesData* _UpgradesData, ALunarPunkPlayerController* PlayerController)
+void UUpgradesManager::Initialize(ALunarPunkGameMode* LPGameMode, UUpgradesData* _UpgradesData, ALunarPunkPlayerController* PlayerController, UEntityManager* EntityManager)
 {
   this->UpgradesData = _UpgradesData;
 
@@ -30,6 +32,15 @@ void UUpgradesManager::Initialize(ALunarPunkGameMode* LPGameMode, UUpgradesData*
   PlayerController->SelectPreviousUpgradeEvent.AddDynamic(this, &UUpgradesManager::SelectPreviousUpgrade);
   PlayerController->RefillUpgradesEvent.AddDynamic(this, &UUpgradesManager::RefillUpgrades);
   UpgradesMenuScroll.AddDynamic(this, &UUpgradesManager::PlaySelectUpgradeSound);
+
+
+  if (EntityManager)
+  {
+      for (ATurret* Turret : EntityManager->Turrets)
+      {
+          NumUpgradesChanged.AddDynamic(Turret, &ATurret::RefreshInfoWidget);
+      }
+  }
 }
 
 void UUpgradesManager::PlaySelectUpgradeSound()
@@ -53,6 +64,7 @@ void UUpgradesManager::AddUpgrade(EUpgradeType AddUpgrade, int32 Count)
               if (Upgrades[Upgrade.Key] == 0)
               {
                   AddOrderUpgrades(AddUpgrade);
+                  UpgradesMenuScroll.Broadcast();
               }
               Upgrades[Upgrade.Key] += Count;
               Exist = true;
@@ -68,10 +80,13 @@ void UUpgradesManager::AddUpgrade(EUpgradeType AddUpgrade, int32 Count)
     if (Count > 0)
     {
         AddOrderUpgrades(AddUpgrade);
+        UpgradesMenuScroll.Broadcast();
     }
   }
 
   UpgradePickedUp.Broadcast(AddUpgrade);
+  NumUpgradesChanged.Broadcast(0);
+
 }
 
 
@@ -99,7 +114,7 @@ bool UUpgradesManager::SpendUpgrade(EUpgradeType SpendUpgrade, int Quantity)
 
       //Refresh the HUD information about the number of the rewards.
       UpgradePickedUp.Broadcast(SpendUpgrade);
-
+      NumUpgradesChanged.Broadcast(0);
       return true;
     }
   }

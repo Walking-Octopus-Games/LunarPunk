@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TurretConquestPlace.generated.h"
 
+class UNiagaraComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurretPlaced);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurretRetired);
@@ -30,6 +31,9 @@ public:
 
   UPROPERTY(EditAnywhere)
     float AdjustToCenterSpeed = 3.0f;
+
+  UPROPERTY(EditAnywhere)
+      UNiagaraComponent* ActivatedEffect;
 
   //Collision to handles the turret placement.
   UPROPERTY(BlueprintReadWrite)
@@ -101,6 +105,9 @@ public:
 
   UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
     void RemoveTurretGhost();
+
+  UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+    void SetTurretDeathBaseMaterial(bool Death);
 
   UFUNCTION(BlueprintCallable)
     void DisableTurretPlace();

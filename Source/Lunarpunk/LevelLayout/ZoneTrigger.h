@@ -7,7 +7,7 @@
 #include "ZoneTrigger.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTriggerActivated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTriggerActivated, bool, ShouldDelay, float, DelayTime);
 
 class  UForkComponent;
 
@@ -28,13 +28,22 @@ public:
   UPROPERTY(EditAnywhere)
     int32 IndexOwnerConquestZone = 1;
 
+  UPROPERTY(EditAnywhere)
+    bool bPersistentFog = false;
+
   UPROPERTY(EditAnywhere, Category = "Debug")
     bool bActivateAtBegin = false;
+
+  UPROPERTY(EditAnywhere)
+    bool bDelaySpawnersIfOverlapZoneTrigger = false;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bDelaySpawnersIfOverlapZoneTrigger", EditConditionHides))
+    float DelaySpawnersGetActivated = 15.0f;
 
   UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* FogEffect;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UForkComponent* ForkComponent;
 
   UPROPERTY(EditAnywhere)

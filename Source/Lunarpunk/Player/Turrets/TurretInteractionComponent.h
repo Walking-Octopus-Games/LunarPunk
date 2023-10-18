@@ -12,6 +12,9 @@ class UDecalComponent;
 class ALunarPunkGameMode;
 class UBoxComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerStartReparingTurret);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerStopReparingTurret);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerStartTakeTurret);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAutoMoveTurretsDelegate, bool, IsAllTurretsMoving);
 
 
@@ -66,6 +69,25 @@ public:
   UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable)
     FAutoMoveTurretsDelegate AutoMoveTurretsDelegate;
 
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Reparing")
+    FPlayerStartReparingTurret PlayerStartReparingTurret;
+
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Reparing")
+      FPlayerStartReparingTurret PlayerStopReparingTurret;
+
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Taking Turret")
+      FPlayerStartTakeTurret PlayerStartTakeTurret;
+
+  UPROPERTY(VisibleAnywhere, BlueprintAssignable, BlueprintCallable, Category = "Player Taking Turret")
+      FPlayerStartTakeTurret PlayerStopTakeTurret;
+
+  UPROPERTY(EditAnywhere, category = "HeightToSetTurret")
+      float HeightToSetTurret = 200.0f;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Deactivate Rotation" )
+      bool DeactivateRotationDuringReparing = false;
+  
+
 private:
 
   UPROPERTY()
@@ -86,6 +108,10 @@ private:
   UPROPERTY()
     bool bUpdateNearestTurret = false;
 
+  UPROPERTY(EditAnywhere, category = "HeightToRepair")
+      float HeightToRepair = 0.0f;
+
+  
   UPROPERTY(EditAnywhere, category = "Interaction | Turret")
     int OffsetTurretNewPosition = 200.0f;
 

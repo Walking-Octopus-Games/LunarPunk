@@ -15,7 +15,7 @@
 #include "Portal/Portal.h"
 #include <ZigZagPawn.h>
 #include <Enemies/BasicEnemy.h>
-
+#include "LevelLayout/ConquestZone.h"
 #include "FMODBlueprintStatics.h"
 
 
@@ -317,12 +317,13 @@ bool AEnemySpawner::CanSpawnEnemy(TMap<TSubclassOf<AActor>, int32>& enemiesTryTo
         NumMaxEnemiesInScreen = MaxEnemiesInScreen[Class];
     }
 
-    if (CurrentEnemiesSpawned[Class] < MaxEnemiesToSpawn[Class] && !MyPool->CheckMaxActorsInScreenReached(Class, NumMaxEnemiesInScreen))
+    int32 NumToReachMaxInScreen = 0;
+    if (CurrentEnemiesSpawned[Class] < MaxEnemiesToSpawn[Class] && !MyPool->CheckMaxActorsInScreenReached(Class, NumToReachMaxInScreen, NumMaxEnemiesInScreen) && NumToReachMaxInScreen>0)
     {
       //Obtain the random num of enemies to spawn between 1 and MaxEnemiesToSpawnEachTime of the class if bSpawnRandomNumOfEnemiesEachTime is true.
       if (CurrentWave.bSpawnRandomNumOfEnemiesEachTime)
       {
-        enemiesTryToSpawn[Class] = FMath::RandRange(1, EnemiesSpawnedEachTime[Class]);
+        enemiesTryToSpawn[Class] = FMath::RandRange(1, FMath::Min(EnemiesSpawnedEachTime[Class], NumToReachMaxInScreen));
       }
 
       //Check if we excedees the MaxEnemiesToSpawn in the current wave
@@ -424,13 +425,18 @@ void AEnemySpawner::StopAudio()
   }
 }
 
-void AEnemySpawner::ActivateSpawner(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen)
+void AEnemySpawner::ActivateSpawner(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen, AConquestZone* ConquestZoneOwner)
 {
   bIsActive = true;
 
   if (MaxEnemiesOfEachClassInScreen.Num() > 0)
   {
       MaxEnemiesInScreen = MaxEnemiesOfEachClassInScreen;
+  }
+
+  if (ConquestZoneOwner && ConquestZoneOwner->bLimitEnemiesNumberWhenTurretsAreDeath)
+  {
+      ConquestZoneOwner->MaxEnemiesInConquestZoneChanged.AddUObject(this, &AEnemySpawner::UpdateMaxEnemiesInScreen);
   }
 
   if (!AmbientHordeAudioInstance.Instance)
@@ -452,4 +458,10 @@ void AEnemySpawner::BeginDestroy()
 {
   Super::BeginDestroy();
   StopAudio();
+}
+
+
+void AEnemySpawner::UpdateMaxEnemiesInScreen(const TMap<TSubclassOf<AActor>, int32>& MaxEnemiesOfEachClassInScreen)
+{
+    MaxEnemiesInScreen = MaxEnemiesOfEachClassInScreen;
 }

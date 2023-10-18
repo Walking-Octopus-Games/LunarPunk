@@ -6,6 +6,8 @@
 #include <BehaviorTree/BlackboardComponent.h>
 #include "BrainComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Managers/EntityManager.h"
+#include "Managers/GameFrameworks/LunarPunkGameMode.h"
 #include "NavigationSystem.h"
 #include "Components/SphereComponent.h"
 #include <Enemies/BasicEnemy.h>
@@ -29,7 +31,7 @@ void AAIControllerZigZag::SetValidTargets()
 		return;
 	}
 
-	UBlackboardComponent* PBlackboardComponent = BrainComponent->GetBlackboardComponent();
+	PBlackboardComponent = BrainComponent->GetBlackboardComponent();
 	AActor* Target = nullptr;
 	
 	if (!PBlackboardComponent)
@@ -37,7 +39,7 @@ void AAIControllerZigZag::SetValidTargets()
 		return;
 	}
 
-	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 	if (!NavSystem) 
 	{
 		return;
@@ -85,6 +87,8 @@ void AAIControllerZigZag::SetValidTargets()
 	
 	if (Sphere == nullptr ) {
 
+		PlayerisNewTarget = true;
+		PBlackboardComponent->SetValueAsBool("PlayerisNewTarget", PlayerisNewTarget);
 
 		UWorld* WorldP = GetWorld();
 		APlayerController* ControllerP = WorldP->GetFirstPlayerController();
@@ -94,11 +98,20 @@ void AAIControllerZigZag::SetValidTargets()
 
 		PBlackboardComponent->SetValueAsVector("PlayerLocation", TLocation);
 
-		SetBlackboardTarget(PBlackboardComponent, Target, TLocation);
+
+		SetPlayerAsTarget();
+		
+		
+		
+
+		//SetBlackboardTarget(PBlackboardComponent, Target, TLocation);
 	
 
 	}
 	else {
+
+		PlayerisNewTarget = false;
+		PBlackboardComponent->SetValueAsBool("PlayerisNewTarget", PlayerisNewTarget);
 
 		TLocation = Sphere->GetComponentLocation();
 		APawn* SphereToFollow = Cast<APawn>(Sphere);
@@ -127,15 +140,15 @@ void AAIControllerZigZag::SetValidTargets()
 
 }
 
-void AAIControllerZigZag::SetBlackboardTarget(UBlackboardComponent* PBlackboardComponent, AActor* Target, FVector& TLocationBB) 
+void AAIControllerZigZag::SetBlackboardTarget(UBlackboardComponent* InPBlackboardComponent, AActor* Target, FVector& TLocationBB) 
 {
 	
 
 
-	if (TLocationBB != PBlackboardComponent->GetValueAsVector("TargetLocation"))
+	if (TLocationBB != InPBlackboardComponent->GetValueAsVector("TargetLocation"))
 	{
-		PBlackboardComponent->SetValueAsVector("TargetLocation", TLocationBB);
-		PBlackboardComponent->SetValueAsObject("Target", Target);
+		InPBlackboardComponent->SetValueAsVector("TargetLocation", TLocationBB);
+		InPBlackboardComponent->SetValueAsObject("Target", Target);
 		
 	}
 }
@@ -149,3 +162,29 @@ void AAIControllerZigZag::OnPossess(APawn* InPawn)
 	RunBehaviorTree(Behavior);
 }
 
+
+void AAIControllerZigZag::SetPlayerAsTarget()
+{
+	if (IsValid(LPGameMode->EntityManager) && IsValid(PBlackboardComponent))
+	{
+
+		APlayableCharacter* Target = LPGameMode->EntityManager->PlayerCharacter;
+		if (IsValid(Target))
+		{
+			PBlackboardComponent->SetValueAsObject(FName("Player"), Target);
+		}
+	}
+}
+
+
+
+
+void AAIControllerZigZag::BeginPlay()
+{
+	Super::BeginPlay();
+	LPGameMode = Cast<ALunarPunkGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (IsValid(GetWorld()))
+	{
+		NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	}
+}

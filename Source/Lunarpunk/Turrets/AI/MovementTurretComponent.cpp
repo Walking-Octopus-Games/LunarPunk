@@ -15,6 +15,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Player/Turrets/TurretInteractionComponent.h"
 #include "Components/SphereComponent.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values for this component's properties
 UMovementTurretComponent::UMovementTurretComponent()
@@ -38,6 +39,7 @@ void UMovementTurretComponent::BeginPlay()
   if (IsValid(AIController))
   {
     AIController->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &UMovementTurretComponent::MoveCompleted);
+
   }
 
 
@@ -63,23 +65,36 @@ void UMovementTurretComponent::BeginPlay()
     AvoidCollisionRange->OnComponentEndOverlap.AddDynamic(this, &UMovementTurretComponent::OnEndOverlapAvoidRange);
     AvoidCollisionRange->SetSphereRadius(AvoidanceRadius);
 
+    if (bShowDebugLines)
+    {
+      AvoidCollisionRange->SetHiddenInGame(false);
+    }
+
     if (!bAvoidOtherTurrets)
     {
       AvoidCollisionRange->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
   }
 
-
-
 }
 
 
 void UMovementTurretComponent::MoveTurret()
 {
-  AIController->MoveToLocation(DestinationPosition, AcceptanceRadius, false, true, true, true, 0, false);
-  MovementState = ETurretMovementState::GoingToDestination;
-  TurretOwner->State = ETurretState::Moving;
-  TurretMovingEvent.Broadcast();
+  AIController->MoveToLocation(DestinationPosition, AcceptanceRadius, false, true, true, false, 0, false);
+
+  if (AIController->IsFollowingAPath())
+  {
+    MovementState = ETurretMovementState::GoingToDestination;
+    TurretOwner->State = ETurretState::Moving;
+    TurretMovingEvent.Broadcast();
+  }
+  else
+  {
+    //AIController->StopMovement();
+    ManageTurretMovement(true);
+  }
+
 }
 
 // Called every frame
@@ -96,6 +111,7 @@ void UMovementTurretComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
     if (TurretOwner->GetActorLocation().Z >= InitialHeight + UnlandingHeight)
     {
+       CalculateDestinationPosition();
       //Start to go to the destination position when unlanded.
       MoveTurret();
       //Adjust the landed location to avoid unexpected acumulative offsets.
@@ -160,7 +176,40 @@ void UMovementTurretComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
         }
       }
 
+      if (bAvoidWalls)
+      {
+        FHitResult Hit;
+        FVector Origin = TurretOwner->GetActorLocation();
+        FVector End = TurretOwner->GetActorLocation() + ResultantOffset.GetSafeNormal() * AvoidanceWallsDistance;
+        bool bHit = GetWorld()->LineTraceSingleByChannel(
+          Hit,
+          Origin,
+          End,
+          ECC_WorldStatic
+        );
+
+        if (bHit)
+        {
+          ResultantOffset = -Direction;
+          if (bShowDebugLines)
+          {
+            DrawDebugLine(GetWorld(), TurretOwner->GetActorLocation(), TurretOwner->GetActorLocation() + ResultantOffset, FColor::Red, true, -1, 0, 10);
+          }
+        }
+        else
+        {
+          if (bShowDebugLines)
+          {
+            DrawDebugLine(GetWorld(), TurretOwner->GetActorLocation(), TurretOwner->GetActorLocation() + ResultantOffset, FColor::Emerald, true, -1, 0, 10);
+          }
+        }
+
+
+
+      }
+
     }
+
     TurretOwner->GetRootComponent()->AddWorldOffset(ResultantOffset, false, nullptr, ETeleportType::TeleportPhysics);
 
   }
@@ -251,7 +300,7 @@ float UMovementTurretComponent::CalculateDestinationPosition()
     if (NavSys != nullptr)
     {
       FNavLocation ProjectedLocation;
-      NavSys->GetRandomReachablePointInRadius(DestinationPosition, 50.f, ProjectedLocation);
+      NavSys->GetRandomReachablePointInRadius(DestinationPosition, 100.f, ProjectedLocation);
       DestinationPosition = ProjectedLocation.Location;
     }
     return Distance;
@@ -270,14 +319,17 @@ void UMovementTurretComponent::MoveInCaseItsAlreadyMoving()
     AIController->StopMovement();
     if (TurretOwner->TargetWaypoint->IsActive)
     {
+      CalculateDestinationPosition();
       MoveTurret();
     }
     else
     {
       if (TurretOwner->State == ETurretState::Moving)
       {
-        TurretStopMovingEvent.Broadcast();
         TurretOwner->State = ETurretState::Set;
+        MovementState = ETurretMovementState::Landing;
+        TurretStopMovingEvent.Broadcast();
+
       }
     }
   }
@@ -288,7 +340,7 @@ void UMovementTurretComponent::MoveCompleted(FAIRequestID RequestID, const FPath
   float Distance = CalculateDestinationPosition();
   if (TurretOwner->State == ETurretState::Moving && Distance < AcceptanceRadius)
   {
-    TurretOwner->State = ETurretState::Set;
+    ForceLanding();
   }
 
 }
@@ -302,6 +354,11 @@ void UMovementTurretComponent::ForceLanding()
   }
   TurretStopMovingEvent.Broadcast();
   MovementState = ETurretMovementState::Landing;
+  if (TurretOwner->State != ETurretState::Deactivated && TurretOwner->State != ETurretState::Conquest)
+  {
+    TurretOwner->State = ETurretState::Set;
+  }
+
 }
 
 void UMovementTurretComponent::ForceUnLanding()

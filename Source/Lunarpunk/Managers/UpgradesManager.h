@@ -8,11 +8,13 @@
 #include "UpgradesManager.generated.h"
 
 class ALunarPunkGameMode;
+class UEntityManager;
 
 /**
  *
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpgradePickedUp, EUpgradeType, UpgradeType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNumUpgradesChanged, int32, Num);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FUpgradesMenuScroll);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUpgradeSpent, TSubclassOf<AActor>, UpgradeClass, int32, NumUpgradeSpent);
 UCLASS()
@@ -24,7 +26,7 @@ public:
   UUpgradesManager();
 
   UFUNCTION()
-    void Initialize(ALunarPunkGameMode* LPGameMode, UUpgradesData* _UpgradesData, ALunarPunkPlayerController* PlayerController);
+    void Initialize(ALunarPunkGameMode* LPGameMode, UUpgradesData* _UpgradesData, ALunarPunkPlayerController* PlayerController, UEntityManager* EntityManager);
   UFUNCTION()
     void PlaySelectUpgradeSound();
 
@@ -80,6 +82,9 @@ public:
 
   UPROPERTY(EditAnywhere, BlueprintAssignable, BlueprintCallable)
     FUpgradeSpent UpgradeSpent;
+
+  UPROPERTY(EditAnywhere, BlueprintAssignable, BlueprintCallable)
+    FNumUpgradesChanged NumUpgradesChanged;
 
   UPROPERTY(EditAnywhere, Category = "Turret|Sound", BlueprintReadWrite)
     class UFMODEvent* UpgradeSelectedAudioEvent;

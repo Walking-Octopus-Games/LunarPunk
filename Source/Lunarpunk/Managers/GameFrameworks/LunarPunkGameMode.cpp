@@ -62,7 +62,7 @@ void ALunarPunkGameMode::Initialize()
       CameraManager = Cast<ACameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));
       LPGameState = GetGameState<ALunarPunkGameState>();
       LPGameState->Initialize(this);
-      InitUpgradesManager(PlayerController);
+      InitUpgradesManager(PlayerController, EntityManager);
       InitPlatesManager(PlayerController, EntityManager);
       InitAbilitiesManager(PlayerController);
       InitStatsManager(PlayerController);
@@ -89,14 +89,14 @@ void ALunarPunkGameMode::InitEntityManager(APlayableCharacter* PlayableCharacter
   EntityManager->Initialize(GetWorld(), PlayableCharacter, PlayerController);
 }
 
-void ALunarPunkGameMode::InitUpgradesManager(ALunarPunkPlayerController* PlayerController)
+void ALunarPunkGameMode::InitUpgradesManager(ALunarPunkPlayerController* PlayerController, UEntityManager* EntityManagerReference)
 {
   UpgradesManager = NewObject<UUpgradesManager>();
 
   if (IsValid(UpgradesManager) && UpgradesDataAsset != nullptr)
   {
     // Use the data asset here
-    UpgradesManager->Initialize(this, UpgradesDataAsset, PlayerController);
+    UpgradesManager->Initialize(this, UpgradesDataAsset, PlayerController, EntityManagerReference);
   }
   else
   {

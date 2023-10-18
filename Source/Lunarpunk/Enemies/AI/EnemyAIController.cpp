@@ -40,6 +40,12 @@ void AEnemyAIController::UpdateNextTargetPoint()
     {
       PBlackboardComponent = BrainComponent->GetBlackboardComponent();
     }
+
+    //if (IsValid(LPGameMode->EntityManager) && IsValid(LPGameMode->EntityManager->PlayerCharacter))
+    //{
+    //  PBlackboardComponent->SetValueAsObject("PlayerPersistance", LPGameMode->EntityManager->PlayerCharacter);
+    //}
+
     SetValidTargets();
   }
 }
@@ -48,8 +54,8 @@ void AEnemyAIController::RemovePlayerAsTarget()
 {
   if (IsValid(PBlackboardComponent))
   {
-
-    PBlackboardComponent->SetValueAsObject(FName("Player"), nullptr);
+    PBlackboardComponent->ClearValue("Player");
+    //PBlackboardComponent->SetValueAsObject(FName("Player"), nullptr);
   }
 }
 
@@ -69,27 +75,43 @@ void AEnemyAIController::SetValidTargets()
 
     UObject* TurretTargetInBlackBoard = PBlackboardComponent->GetValueAsObject("TurretTarget");
     AActor* TurretTargetActorInBlackBoard = Cast<AActor>(TurretTargetInBlackBoard);
+    UObject* PlayerRef = PBlackboardComponent->GetValueAsObject("Player");
     if (!CheckIsTheActorValid(TurretTargetActorInBlackBoard))
     {
       bool bTurretsFound = false;
       SetTurretAsTarget(TurretTarget, bTurretsFound);
-      if (!bTurretsFound)
+      if (!bTurretsFound && !IsValid(PlayerRef))
       {
+        DeleteBBValues();
         SetPlayerAsTarget();
       }
-      else
+      else if (bTurretsFound)
       {
-        RemovePlayerAsTarget();
+        DeleteBBValues();
+        //RemovePlayerAsTarget();
         SetTurretBlackboardTarget(TurretTarget);
         GetRandomPointInTurretArea(TurretTargetActorInBlackBoard);
       }
     }
     else
     {
+      //DeleteBBValues();
       RemovePlayerAsTarget();
       if (!ETP)
       {
-        UpdateRelativeAreaPosition(TurretTargetActorInBlackBoard);
+        TArray<ATurret*> Turrets = LPGameMode->EntityManager->Turrets;
+        ATurret* TurretWithETP = FindTurretWithFreeETP(Turrets);
+        ATurret* Turretbb = Cast<ATurret>(TurretTargetActorInBlackBoard);
+
+        if (!IsValid(TurretWithETP) || Turretbb->TargetForEnemiesHandlerComponent->IsAnyETPFree())
+        {
+          UpdateRelativeAreaPosition(TurretTargetActorInBlackBoard);
+        }
+        else
+        {
+          DeleteBBValues();
+          SetValidTargets();
+        }
       }
       else
       {
@@ -182,29 +204,77 @@ void AEnemyAIController::SetTurretAsTarget(AActor*& Target, bool& bTurretFound)
   TArray<ATurret*> Turrets = LPGameMode->EntityManager->Turrets;
   if (Turrets.Num() > 0)
   {
-    TArray<int32> IndexesChecked;
-    int32 Index = FMath::RandRange(0, Turrets.Num() - 1);
-    IndexesChecked.Add(Index);
-    while (IndexesChecked.Num() < Turrets.Num() && !CheckIsTheActorValid(Turrets[Index]))
-    {
-      Index = FMath::RandRange(0, Turrets.Num() - 1);
+    ATurret* TargetTurret = FindTurretWithFreeETP(Turrets);
 
-      if (!IndexesChecked.Contains(Index))
+    if (!IsValid(TargetTurret))
+    {
+      TArray<int32> IndexesChecked;
+      int32 Index = FMath::RandRange(0, Turrets.Num() - 1);
+      IndexesChecked.Add(Index);
+      int32 Tries = 0;
+      while (IndexesChecked.Num() < Turrets.Num() && !CheckIsTheActorValid(Turrets[Index]) && Tries < 10)
       {
-        IndexesChecked.Add(Index);
+        Index = FMath::RandRange(0, Turrets.Num() - 1);
+
+        if (!IndexesChecked.Contains(Index))
+        {
+          IndexesChecked.Add(Index);
+        }
+        Tries++;
+      }
+
+      if (CheckIsTheActorValid(Turrets[Index]))
+      {
+        Target = Turrets[Index];
+        GetRandomPointInTurretArea(Target);
+        Turrets[Index]->TargetForEnemiesHandlerComponent->GetETPAndAssignItToAFreeEnemy();
+        bTurretFound = true;
       }
     }
-
-    if (CheckIsTheActorValid(Turrets[Index]))
+    else
     {
-      Target = Turrets[Index];
-      GetRandomPointInTurretArea(Target);
-      Turrets[Index]->TargetForEnemiesHandlerComponent->GetETPAndAssignItToAFreeEnemy();
+      Target = TargetTurret;
+      GetRandomPointInTurretArea(TargetTurret);
+      TargetTurret->TargetForEnemiesHandlerComponent->GetETPAndAssignItToAFreeEnemy();
       bTurretFound = true;
     }
 
   }
 
+}
+
+ATurret* AEnemyAIController::FindTurretWithFreeETP(TArray<ATurret*> Turrets)
+{
+  TArray<ATurret*> TurretsRandomizeOrder = Turrets;
+  ShuffleArray(TurretsRandomizeOrder);
+  for (ATurret* Turret : TurretsRandomizeOrder)
+  {
+    for (auto TargetPoint : Turret->EnemyTargetPoints)
+    {
+      if (!TargetPoint->IsOcuppied())
+      {
+        return Turret;
+      }
+    }
+
+  }
+  return nullptr;
+}
+
+void AEnemyAIController::ShuffleArray(TArray<ATurret*>& myArray)
+{
+  if (myArray.Num() > 0)
+  {
+    int32 LastIndex = myArray.Num() - 1;
+    for (int32 i = 0; i <= LastIndex; ++i)
+    {
+      int32 Index = FMath::RandRange(i, LastIndex);
+      if (i != Index)
+      {
+        myArray.Swap(i, Index);
+      }
+    }
+  }
 }
 
 void AEnemyAIController::BeginPlay()
@@ -215,7 +285,6 @@ void AEnemyAIController::BeginPlay()
   {
     NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
   }
-
 }
 
 void AEnemyAIController::SetPlayerAsTarget()
@@ -260,6 +329,8 @@ bool AEnemyAIController::CheckIsTheActorValid(AActor* Actor)
     }
 
     ATurret* TurretCasted = Cast<ATurret>(Actor);
+
+
     if (IsValid(TurretCasted) && (TurretCasted->State == ETurretState::Set || TurretCasted->State == ETurretState::Conquest || TurretCasted->State == ETurretState::Moving))
     {
       return true;
@@ -290,17 +361,6 @@ void AEnemyAIController::AssignETP(UEnemyTargetPoints* EtpToEnemy)
   }
 }
 
-void AEnemyAIController::RemoveETP()
-{
-  if (IsValid(ETP))
-  {
-    ETP->SetbIsOcuppied(false);
-    ETP = nullptr;
-    //PBlackboardComponent->SetValueAsObject("TurretTargetPoint", nullptr);
-  }
-  DeleteBBValues();
-}
-
 void AEnemyAIController::DeleteBBValues()
 {
   if (IsValid(PBlackboardComponent))
@@ -310,6 +370,14 @@ void AEnemyAIController::DeleteBBValues()
     PBlackboardComponent->ClearValue("TargetAreaPosition");
     PBlackboardComponent->ClearValue("TTPPosition");
     PBlackboardComponent->ClearValue("TurretTarget");
+    PBlackboardComponent->ClearValue("PlayerPersistance");
+    PBlackboardComponent->ClearValue("TurretMovingPersistance");
+    
+    if (IsValid(ETP))
+    {
+      ETP->SetbIsOcuppied(false);
+    }
+    ETP = nullptr;
   }
 
 }

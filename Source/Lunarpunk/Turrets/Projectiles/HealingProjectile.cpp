@@ -47,8 +47,8 @@ void AHealingProjectile::BeginPlay()
 
 void AHealingProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-  ShootEffectComponent->Activate();
-
+  //ShootEffectComponent->Activate();
+  ShowShootEffect();
   GetOverlappingActors(OverlapedActors, ABasicEnemy::StaticClass());
 
   if (OverlapedActors.Num() > 0)
@@ -153,4 +153,14 @@ void AHealingProjectile::BeginDestroy()
   }
 
   Super::BeginDestroy();
+}
+
+void AHealingProjectile::ShowShootEffect()
+{
+  if (IsValid(ShootEffectComponent) && ShootEffectComponent->GetAsset())
+  {
+    UNiagaraComponent* ShootEffectComponentCopy = ShootEffectComponent;
+    ShootEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ShootEffectComponent->GetAsset(), GetActorLocation(), FRotator(0,0,0));
+    ShootEffectComponent = ShootEffectComponentCopy;
+  }
 }

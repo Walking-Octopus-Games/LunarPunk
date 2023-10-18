@@ -1,0 +1,29 @@
+{
+    "Waves": [
+        {
+            "TotalEnemies": 10,
+            "TimeToStart": 2,
+            "TimeToSpawn": 0.5,
+            "SpawnRandomNumOfEnemiesEachTime": true,
+            "EnemiesClasses": [
+                { "BP_EnemyCharacterBasic": 1 }
+            ],
+            "MaxNumSpawnedEachTime": [
+                { "BP_EnemyCharacterBasic": 3 }
+            ]
+        }
+    ,
+        {
+            "TotalEnemies": 5,
+            "TimeToStart": 6,
+            "TimeToSpawn": 0.5,
+            "SpawnRandomNumOfEnemiesEachTime": true,
+            "EnemiesClasses": [
+                { "BP_EnemyCharacterBasic": 1 }
+            ],
+            "MaxNumSpawnedEachTime": [
+                { "BP_EnemyCharacterBasic": 3 }
+            ]
+        }
+    ]
+}

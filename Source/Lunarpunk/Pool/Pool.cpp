@@ -174,9 +174,10 @@ int32 APool::NumActiveActorsOfClass(TSubclassOf<AActor> Class)
 }
 
 
-bool APool::CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32 OverrideMax)
+bool APool::CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32& NumToReachMax, int32 OverrideMax)
 {
     ALunarPunkGameMode* GameMode = Cast<ALunarPunkGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+    NumToReachMax = 1;
 
     if (GameMode && GameMode->EntityManager)
     {
@@ -204,8 +205,12 @@ bool APool::CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32 Overr
           
         }
 
-        if (NumActiveActorsOfClass(Class) < OverrideMax)
+        //Computes the num os available enemies to spawn in screen
+        NumToReachMax = OverrideMax - NumActiveActorsOfClass(Class);
+
+        if (NumToReachMax>0)
         {
+            
             return false;
         }
         else 
@@ -217,6 +222,5 @@ bool APool::CheckMaxActorsInScreenReached(TSubclassOf<AActor> Class, int32 Overr
     }
 
     return false;
-
 
 }

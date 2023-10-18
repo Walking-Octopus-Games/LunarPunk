@@ -8,6 +8,9 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Managers/EntityManager.h"
+#include "Managers/GameFrameworks/LunarPunkGameMode.h"
+#include "Player/LunarPunkPlayerController.h"
 #include "Player/PlayableCharacter.h"
 #include "Turrets/Turret.h"
 #include "Turrets/AI/MovementTurretComponent.h"
@@ -59,10 +62,16 @@ void UForkComponent::MoveAllTurrets(bool AssignNewWaypoint)
       if (AssignNewWaypoint)
       {
         T->TargetWaypoint = TargetWaypointToActivate;
+        if (IsValid(TargetWaypointToAssignAsPrevious))
+        {
+          TargetWaypointToAssignAsPrevious->NextWaypoint = TargetWaypointToActivate;
+        }
       }
       T->TurretMovementComponent->ManageTurretMovement(false);
+      T->TurretMovementComponent->MoveInCaseItsAlreadyMoving();
     }
   }
+
 }
 
 void UForkComponent::AssignTurretNewWaypoints()
@@ -79,7 +88,35 @@ void UForkComponent::ActivateForkComponent()
 
     CloseDoors();
 
+    if (bTeleportTurretsToDoor)
+    {
+      MoveTurretsInFrontOfTheDoor();
+    }
+
+
     AssignTurretNewWaypoints();
+  }
+
+  ForkActivated.Broadcast();
+}
+
+void UForkComponent::SwitchPlayerTurretMovementAbility(bool Activate)
+{
+  if (IsValid(GetWorld()))
+  {
+    ALunarPunkGameMode* LPGameMode = Cast<ALunarPunkGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+
+    if (IsValid(LPGameMode) && IsValid(LPGameMode->EntityManager) && IsValid(LPGameMode->EntityManager->PlayerCharacter) && IsValid(LPGameMode->EntityManager->PlayerCharacter->LPPlayerController))
+    {
+      if (!Activate)
+      {
+        LPGameMode->EntityManager->PlayerCharacter->LPPlayerController->DeactivateMoveAllTurrets();
+      }
+      else
+      {
+        LPGameMode->EntityManager->PlayerCharacter->LPPlayerController->ReactivateMoveAllTurrets(LPGameMode->EntityManager->PlayerCharacter);
+      }
+    }
   }
 }
 
@@ -98,6 +135,7 @@ void UForkComponent::OpenDoors()
       Actor->SetActorHiddenInGame(false);
     }
     MoveAllTurrets(false);
+    SwitchPlayerTurretMovementAbility(false);
   }
 }
 
@@ -116,14 +154,59 @@ void UForkComponent::CloseDoors()
 
     OppositeZoneTrigger->BlockCollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     OppositeZoneTrigger->BlockCollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
+    OppositeZoneTrigger->ZoneTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    OppositeZoneTrigger->ZoneTrigger->Deactivate();
     if (IsValid(OppositeZoneTrigger->FogEffect))
     {
       OppositeZoneTrigger->FogEffect->SetVisibility(true);
     }
-
+    SwitchPlayerTurretMovementAbility(true);
     //for (AForkDoor* WayForkDoor : OppositeZoneTrigger->ForkComponent->WayForkDoors)
     //{
     //  WayForkDoor->Close();
     //}
+  }
+}
+
+void UForkComponent::MoveTurretsInFrontOfTheDoor()
+{
+  TArray<AActor*> TurretActors;
+  UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATurret::StaticClass(), TurretActors);
+  FVector Location = GetOwner()->GetActorLocation() + OffsetFromFork;
+  FVector ForkRight = GetOwner()->GetActorRightVector();
+  FVector ForkBackWard = -GetOwner()->GetActorForwardVector();
+  int32 Padding = 0;
+  int32 TurretsInEachRow = TurretActors.Num() / TurretRows;
+  int32 CurrentTurretsInRow = 0;
+  int32 CurrentLine = 0;
+
+  for (AActor* Turret : TurretActors)
+  {
+    ATurret* T = Cast<ATurret>(Turret);
+
+    if (T)
+    {
+        if (T->State == ETurretState::PickedUp)
+        {
+            continue;
+        }
+    }
+    Turret->SetActorLocation(FVector(
+      Location.X,
+      Location.Y,
+      Turret->GetActorLocation().Z)
+      + ForkRight * Padding * TurretsPaddingAmount
+      + ForkBackWard * CurrentLine * TurretsPaddingAmount
+    );
+
+    Padding++;
+    CurrentTurretsInRow++;
+
+    if (TurretsInEachRow == CurrentTurretsInRow)
+    {
+      CurrentTurretsInRow = 0;
+      Padding = 0;
+      CurrentLine++;
+    }
   }
 }

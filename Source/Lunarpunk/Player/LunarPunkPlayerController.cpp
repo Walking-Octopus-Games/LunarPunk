@@ -26,8 +26,17 @@ void ALunarPunkPlayerController::Initialize(APlayableCharacter* _PlayableCharact
 
   CameraManager = Cast<ACameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));/*Cast<ACameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));*/
 
-  //Changin listener to player pos
-  SetAudioListenerAttenuationOverride(PlayableCharacter->GetRootComponent(), PlayableCharacter->GetActorLocation());
+
+   if (IsValid(PlayableCharacter))
+    {
+      FRotator Rotator = (PlayableCharacter->GetActorRotation() * -1) + CameraManager->GetCameraRotation();
+      Rotator.Yaw += 90;
+      //Changin listener to player pos
+      SetAudioListenerOverride(CameraManager->GetRootComponent(), FVector(0, 0, 0), Rotator);
+      SetAudioListenerAttenuationOverride(CameraManager->GetRootComponent(), FVector(0, 0, 0));
+
+    }
+
 
   InitializeInput(PlayableCharacter, true);
 
@@ -41,7 +50,7 @@ void ALunarPunkPlayerController::Initialize(APlayableCharacter* _PlayableCharact
 
   SetMouseIsController(true);
 
-  SetAudioListenerOverride(PlayableCharacter->GetRootComponent(), FVector::ZeroVector, FRotator::ZeroRotator);
+  //SetAudioListenerOverride(PlayableCharacter->GetRootComponent(), FVector::ZeroVector, FRotator::ZeroRotator);
   InitializeEvent.Broadcast();
 }
 
@@ -53,12 +62,13 @@ void ALunarPunkPlayerController::Tick(float DeltaTime)
   {
     RotateTowardsMouse();
   }
-
 }
 
 void ALunarPunkPlayerController::InitializeInput(APlayableCharacter* PlayableChar, bool bIsActive)
 {
   bInputIsActive = bIsActive;
+
+  bIsMovementDeactivated = !bIsActive;
 
   // Setup Actions
   if (bIsActive)
@@ -96,12 +106,11 @@ void ALunarPunkPlayerController::InitializeInput(APlayableCharacter* PlayableCha
 
     ReactivateGrenadeAbbility(PlayableChar);
 
-
     ReactivateShieldAbbility(PlayableChar);
 
     ReactivateSparkleAbbility(PlayableChar);
 
- 
+
 
     SetupBinding(FName("ThrowActivateTraps"), IE_Pressed, [PlayableChar, this]()
       {
@@ -165,25 +174,25 @@ void ALunarPunkPlayerController::InitializeInput(APlayableCharacter* PlayableCha
 
 
     SetupBinding(FName("RefillUpgrades"), IE_Pressed, [PlayableChar, this]()
+      {
+        if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
         {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
+          return;
+        }
 
-            RefillUpgradesEvent.Broadcast();
-        });
+        RefillUpgradesEvent.Broadcast();
+      });
 
 
     SetupBinding(FName("KillEnemies"), IE_Pressed, [PlayableChar, this]()
+      {
+        if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
         {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
+          return;
+        }
 
-            KillEnemiesEvent.Broadcast();
-        });
+        KillEnemiesEvent.Broadcast();
+      });
 
     SetupBinding(FName("PositionTurret"), IE_Pressed, [PlayableChar, this]()
       {
@@ -347,16 +356,16 @@ void ALunarPunkPlayerController::InitializeInput(APlayableCharacter* PlayableCha
 
 
     SetupBinding(FName("SkipTutorial"), IE_Pressed, [PlayableChar, this]()
+      {
+        if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
         {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                SkipTutorial.Broadcast();
-            }
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
-            {
-                SkipTutorial.Broadcast();
-            }
+          SkipTutorial.Broadcast();
         }
+        if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
+        {
+          SkipTutorial.Broadcast();
+        }
+      }
     );
 
     SetupBinding(FName("SetMouseActive"), IE_Pressed, [PlayableChar, this]()
@@ -427,7 +436,7 @@ void ALunarPunkPlayerController::MoveForward(float value)
     return;
   }
   // bCanDestroyPortal -> its true while charging the ray, so cant move.
-  if (IsValid(CameraManager) && !IsDeactivated)
+  if (IsValid(CameraManager) && !bIsMovementDeactivated)
   {
 
     CurrentVel = FMath::Lerp(CurrentVel, MaxVel, AcelPlayer);
@@ -467,7 +476,7 @@ void ALunarPunkPlayerController::MoveRight(float value)
     return;
   }
   // bCanDestroyPortal -> its true while charging the ray, so cant move.
-  if (IsValid(CameraManager) && !IsDeactivated)
+  if (IsValid(CameraManager) && !bIsMovementDeactivated)
   {
     CurrentVel = FMath::Lerp(CurrentVel, MaxVel, AcelPlayer);
     if (value * LastForward > 0)
@@ -523,7 +532,7 @@ void ALunarPunkPlayerController::RotateTowardsMouse()
 
   // Gamepad CameraRight Stick input deactivate mouse until game restart.
   // Player can't rotate in the destroy portal zone
-  if (bMouseActive && !IsDeactivated && DeprojectMousePositionToWorld(MouseLocation, MouseDirection))
+  if (bMouseActive && !bIsMovementDeactivated && DeprojectMousePositionToWorld(MouseLocation, MouseDirection))
   {
     FVector ActorLocation = PlayableCharacter->GetActorLocation();
     FVector Intersection = FMath::LinePlaneIntersection(MouseLocation, MouseLocation + MouseDirection, FVector(0, 0, ActorLocation.Z), FVector::UpVector);
@@ -538,7 +547,7 @@ void ALunarPunkPlayerController::RotateGamePad()
   {
     return;
   }
-  if (!IsDeactivated)
+  if (!bIsMovementDeactivated)
   {
 
     if ((0.15 < TurnXValue || TurnXValue < -0.15) || (0.15 < TurnYValue || TurnYValue < -0.15))
@@ -578,54 +587,69 @@ void ALunarPunkPlayerController::RotateGamePad()
 void ALunarPunkPlayerController::UpDirectionalPad()
 {
 
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
-  {
-    return;
-  }
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
-  {
-    // PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-    ThrowGrenadeAbility.Broadcast();
-  }
+    if (bGranadeIsActive)
+    {
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
+        {
+            return;
+        }
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
+        {
+            // PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+            ThrowGrenadeAbility.Broadcast();
+        }
+    }
+
 }
 
 void ALunarPunkPlayerController::RightDirectionalPad()
 {
+    if (bSparkIsActive)
+    {
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
+        {
+            return;
+        }
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
+        {
+            //PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+            ThrowSparkleAbility.Broadcast();
 
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
-  {
-    return;
-  }
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
-  {
-    //PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-    ThrowSparkleAbility.Broadcast();
-    
-  }
+        }
+    }
+ 
 }
 void ALunarPunkPlayerController::DownDirectionalPad()
 {
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
-  {
-    return;
-  }
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
-  {
-    // PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-    ThrowActivateTrapsAbility.Broadcast();
-  }
+    if (bTrapAbilityIsActive)
+    {
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
+        {
+            return;
+        }
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
+        {
+            // PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+            ThrowActivateTrapsAbility.Broadcast();
+        }
+    }
+ 
 }
 void ALunarPunkPlayerController::LeftDirectionalPad()
 {
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
-  {
-    return;
-  }
-  if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
-  {
-    //PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-    ThrowShieldAbility.Broadcast();
-  }
+    if (bShieldIsActive)
+    {
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Cinematic)
+        {
+            return;
+        }
+        if (PlayableCharacter->ActualPlayerStatus == EPlayerState::Default)
+        {
+            //PlayableCharacter->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+            ThrowShieldAbility.Broadcast();
+        }
+    }
+  
 }
 
 void ALunarPunkPlayerController::ResetMoveTurretsCooldown()
@@ -659,7 +683,10 @@ void ALunarPunkPlayerController::AdjustControllerToCamera()
 
 void ALunarPunkPlayerController::DeactivateAbbilities()
 {
-
+  bGranadeIsActive = false;
+  bSparkIsActive = false;
+  bShieldIsActive = false;
+  bTrapAbilityIsActive = false;
   InputComponent->RemoveActionBinding(FName("ActiveAbility"), IE_Pressed);
   InputComponent->RemoveActionBinding(FName("ActiveAbility"), IE_Released);
 
@@ -667,22 +694,25 @@ void ALunarPunkPlayerController::DeactivateAbbilities()
 
 void ALunarPunkPlayerController::DeactivateSparkleAbbility()
 {
-    InputComponent->RemoveActionBinding(FName("ThrowSparkle"), IE_Pressed);
-    InputComponent->RemoveActionBinding(FName("ThrowSparkle"), IE_Released);
+  bSparkIsActive = false;
+  InputComponent->RemoveActionBinding(FName("ThrowSparkle"), IE_Pressed);
+  InputComponent->RemoveActionBinding(FName("ThrowSparkle"), IE_Released);
 }
 
 
 void ALunarPunkPlayerController::DeactivateShieldAbbility()
 {
-    InputComponent->RemoveActionBinding(FName("ThrowShield"), IE_Pressed);
-    InputComponent->RemoveActionBinding(FName("ThrowShield"), IE_Released);
+  bShieldIsActive = false;
+  InputComponent->RemoveActionBinding(FName("ThrowShield"), IE_Pressed);
+  InputComponent->RemoveActionBinding(FName("ThrowShield"), IE_Released);
 }
 
 
 void ALunarPunkPlayerController::DeactivateGrenadeAbbility()
 {
-    InputComponent->RemoveActionBinding(FName("ThrowGrenade"), IE_Pressed);
-    InputComponent->RemoveActionBinding(FName("ThrowGrenade"), IE_Released);
+  bGranadeIsActive = false;
+  InputComponent->RemoveActionBinding(FName("ThrowGrenade"), IE_Pressed);
+  InputComponent->RemoveActionBinding(FName("ThrowGrenade"), IE_Released);
 }
 
 void ALunarPunkPlayerController::ReactivateAbbilities(APlayableCharacter* PlayableChar)
@@ -751,99 +781,105 @@ void ALunarPunkPlayerController::ReactivateMoveAllTurrets(APlayableCharacter* Pl
 
 void ALunarPunkPlayerController::ReactivateSparkleAbbility(APlayableCharacter* PlayableChar)
 {
-    SetupBinding(FName("ThrowSparkle"), IE_Pressed, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-                ThrowSparkleAbility.Broadcast();
-            }
-        });
+  bSparkIsActive = true;
+
+  SetupBinding(FName("ThrowSparkle"), IE_Pressed, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+        ThrowSparkleAbility.Broadcast();
+      }
+    });
 
 
 
-    SetupBinding(FName("ThrowSparkle"), IE_Released, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
+  SetupBinding(FName("ThrowSparkle"), IE_Released, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
 
-            StopThrowingSparkleAbility.Broadcast();
+      StopThrowingSparkleAbility.Broadcast();
 
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::Default;
-            }
-        });
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::Default;
+      }
+    });
 
 }
 
 void ALunarPunkPlayerController::ReactivateShieldAbbility(APlayableCharacter* PlayableChar)
 {
+  bShieldIsActive = true;
 
-    SetupBinding(FName("ThrowShield"), IE_Pressed, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-                ThrowShieldAbility.Broadcast();
-            }
-        });
+  SetupBinding(FName("ThrowShield"), IE_Pressed, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+        ThrowShieldAbility.Broadcast();
+      }
+    });
 
-    SetupBinding(FName("ThrowShield"), IE_Released, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
-            StopThrowingShieldAbility.Broadcast();
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::Default;
-            }
-        });
+  SetupBinding(FName("ThrowShield"), IE_Released, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
+      StopThrowingShieldAbility.Broadcast();
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::Default;
+      }
+    });
 }
 
 
 
 void ALunarPunkPlayerController::ReactivateGrenadeAbbility(APlayableCharacter* PlayableChar)
 {
-    SetupBinding(FName("ThrowGrenade"), IE_Pressed, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
-                ThrowGrenadeAbility.Broadcast();
-            }
-        });
+  
+  bGranadeIsActive = true;
 
-    SetupBinding(FName("ThrowGrenade"), IE_Released, [PlayableChar, this]()
-        {
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
-            {
-                return;
-            }
+  SetupBinding(FName("ThrowGrenade"), IE_Pressed, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Default)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::LaunchingAbility;
+        ThrowGrenadeAbility.Broadcast();
+      }
+    });
 
-            StopThrowingGrenadeAbility.Broadcast();
+  SetupBinding(FName("ThrowGrenade"), IE_Released, [PlayableChar, this]()
+    {
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::Cinematic)
+      {
+        return;
+      }
 
-            if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
-            {
-                PlayableChar->ActualPlayerStatus = EPlayerState::Default;
-            }
-        });
+      StopThrowingGrenadeAbility.Broadcast();
+
+      if (PlayableChar->ActualPlayerStatus == EPlayerState::LaunchingAbility)
+      {
+        PlayableChar->ActualPlayerStatus = EPlayerState::Default;
+      }
+    });
 }
 
 
@@ -861,15 +897,23 @@ void ALunarPunkPlayerController::SetControllerActiveThumbStick(float value)
 // Change between mouse and Gamepad controller.
 void ALunarPunkPlayerController::SetMouseIsController(bool bIsActive)
 {
-    bMouseActive = bIsActive;
-    bShowMouseCursor = bIsActive;
+  bMouseActive = bIsActive;
+  bShowMouseCursor = bIsActive;
 
-    float MousePosX;
-    float MousePosY;
-    
+  InputControllerChange.Broadcast(bIsActive);
 
-    if (GetMousePosition(MousePosX, MousePosY))
-    {
-      SetMouseLocation(MousePosX, MousePosY);
-    }
+  float MousePosX;
+  float MousePosY;
+
+
+  if (GetMousePosition(MousePosX, MousePosY))
+  {
+    SetMouseLocation(MousePosX, MousePosY);
+  }
+}
+
+void ALunarPunkPlayerController::DeactivateMovement()
+{
+  bIsMovementDeactivated = true;
+  PlayableCharacter->ActualPlayerStatus = EPlayerState::Cinematic;
 }

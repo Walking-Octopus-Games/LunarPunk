@@ -31,7 +31,7 @@ public:
   // Sets default values for this component's properties
   UMovementTurretComponent();
 
-  UFUNCTION()
+  UFUNCTION(BlueprintCallable)
     void ManageTurretMovement(bool IsMoving);
 
 protected:
@@ -40,7 +40,8 @@ protected:
 
   // Called when the game starts
   virtual void BeginPlay() override;
-  void MoveTurret();
+  //UFUNCTION(BlueprintCallable)
+    void MoveTurret();
 
 public:
   // Called every frame
@@ -48,26 +49,36 @@ public:
 
   float CalculateDestinationPosition();
 
-  void MoveInCaseItsAlreadyMoving();
+  UFUNCTION(BlueprintCallable)
+    void MoveInCaseItsAlreadyMoving();
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float AcceptanceRadius = 10.f;
 
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
-      bool bAvoidOtherTurrets = true;
+    bool bAvoidOtherTurrets = true;
 
   UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
-      float AvoidanceSpeed = 50.0f;
+    float AvoidanceSpeed = 150.0f;
 
   UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
-      float AvoidanceRadius = 180.0f;
+    float AvoidanceRadius = 150.0f;
 
   UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
-      FName CollisionName = FName("AvoidCollision");
+    bool bAvoidWalls = true;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets && bAvoidWalls", EditConditionHides))
+    float AvoidanceWallsDistance = 40.0f;
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
+    FName CollisionName = FName("AvoidCollision");
+
+  UPROPERTY(EditAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
+    bool bShowDebugLines = false;
 
   UPROPERTY(VisibleAnywhere, meta = (EditCondition = "bAvoidOtherTurrets", EditConditionHides))
-      USphereComponent* AvoidCollisionRange;
+    USphereComponent* AvoidCollisionRange;
 
   UPROPERTY()
     class ATurret* TurretOwner;
@@ -90,7 +101,6 @@ public:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FVector DestinationPosition;
 
-
   void MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& PathFollowingResult);
 
   //Force the landing state of the movement component;
@@ -102,19 +112,19 @@ public:
     void ForceUnLanding();
 
   UFUNCTION()
-      void OnBeginOverlapAvoidRange(UPrimitiveComponent* OverlappedComponent,
-          AActor* OtherActor,
-          UPrimitiveComponent* OtherComp,
-          int32 OtherBodyIndex,
-          bool bFromSweep,
-          const FHitResult& SweepResult);
+    void OnBeginOverlapAvoidRange(UPrimitiveComponent* OverlappedComponent,
+      AActor* OtherActor,
+      UPrimitiveComponent* OtherComp,
+      int32 OtherBodyIndex,
+      bool bFromSweep,
+      const FHitResult& SweepResult);
 
   UFUNCTION()
-      void OnEndOverlapAvoidRange(UPrimitiveComponent* OverlappedComponent,
-          AActor* OtherActor,
-          UPrimitiveComponent* OtherComp,
-          int32 OtherBodyIndex
-      );
+    void OnEndOverlapAvoidRange(UPrimitiveComponent* OverlappedComponent,
+      AActor* OtherActor,
+      UPrimitiveComponent* OtherComp,
+      int32 OtherBodyIndex
+    );
 
   FTurretMoving TurretMovingEvent;
   FTurretStop TurretStopMovingEvent;
@@ -122,5 +132,5 @@ private:
 
   float InitialHeight = 0.0f;
 
-    TArray<ATurret*> OverlappedTurrets;
+  TArray<ATurret*> OverlappedTurrets;
 };

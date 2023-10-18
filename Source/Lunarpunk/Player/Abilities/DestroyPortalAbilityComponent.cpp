@@ -72,7 +72,7 @@ void UDestroyPortalAbilityComponent::StartDestroyPortal()
         {
           GameMode->CameraManager->StartShakingCamera(UpDownShakeSpeed, RightLeftShakeSpeed, UpDownAngle, RightLeftAngle, bShouldVibrate);
         }
-        PlayableCharacter->LPPlayerController->IsDeactivated = true;
+        PlayableCharacter->LPPlayerController->bIsMovementDeactivated = true;
         GetWorld()->GetTimerManager().ClearTimer(DestroyPortalTimerHandle);
         GetWorld()->GetTimerManager().SetTimer(DestroyPortalTimerHandle, this, &UDestroyPortalAbilityComponent::DestroyPortal, 1.0f, false, timeToDestroyPortal);
         SetAvailableToDestroyPortal.Broadcast(true, timeToDestroyPortal);
@@ -102,7 +102,7 @@ void UDestroyPortalAbilityComponent::DestroyPortal()
   }
   ShowRayEffect(PlayableCharacter->RayDestroyPortalEffectComponent);
   PlayableCharacter->ActualPlayerStatus = EPlayerState::Default;
-  PlayableCharacter->LPPlayerController->IsDeactivated = false;
+  PlayableCharacter->LPPlayerController->bIsMovementDeactivated = false;
   bButton1Pressed = false;
   bButton2Pressed = false;
 
@@ -115,7 +115,7 @@ void UDestroyPortalAbilityComponent::ResetDestroyPortal()
     GameMode->CameraManager->StopShakingCamera();
   }
   SetAvailableToDestroyPortal.Broadcast(false, timeToDestroyPortal);
-  PlayableCharacter->LPPlayerController->IsDeactivated = false;
+  PlayableCharacter->LPPlayerController->bIsMovementDeactivated = false;
   GetWorld()->GetTimerManager().ClearTimer(DestroyPortalTimerHandle);
 
 }

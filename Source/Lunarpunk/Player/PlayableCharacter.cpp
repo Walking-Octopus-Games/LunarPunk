@@ -75,7 +75,10 @@ APlayableCharacter::APlayableCharacter()
   RayDestroyPortalEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("RayDestroyPortalEffectComponent"));
 
   AbilityEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("AbilityEffectComponent"));
+  GranadeEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GranadeEffectComponent"));
+  
   AbilityEffectComponent->SetupAttachment(RootComponent);
+  GranadeEffectComponent->SetupAttachment(AbilityEffectComponent);
 
   ShieldEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("ShieldEffect"));
   ShieldEffect->SetupAttachment(AbilityEffectComponent);
@@ -110,6 +113,7 @@ void APlayableCharacter::Initialize(ALunarPunkPlayerController* _LPPLayerControl
       GameMode->Initialize();
       HealthComponent->DamageReceived.AddDynamic(GameMode->HUDManager, &AHUDManager::ShowDamageEffectInHUD);
       HealthComponent->UpdateHealth.AddDynamic(GameMode->HUDManager, &AHUDManager::UpdatePlayerLifeInHUD);
+      HealthComponent->ActorDeath.AddDynamic(LPPlayerController, &ALunarPunkPlayerController::DeactivateMovement);
       LPPlayerController->GodModeEvent.AddDynamic(GameMode, &ALunarPunkGameMode::GodMode);
       LPPlayerController->GodModeTurretsEvent.AddDynamic(GameMode, &ALunarPunkGameMode::GodModeTurrets);
 
