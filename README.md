@@ -27,7 +27,7 @@ https://store.steampowered.com/app/2378380/Lunarpunk/
 
 ## Latest Gameplay video:
 
-Code Team:
+Programming Team:
    - Alberto Martos
    - Carmen Ocampos
    - Daniel Carrasco
