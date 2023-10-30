@@ -24,13 +24,13 @@
 https://store.steampowered.com/app/2378380/Lunarpunk/
 
 # Programming Team:
-   - Alberto Martos
-   - Carmen Ocampos
-   - Daniel Carrasco
-   - Raúl Corrales
-   - Adrián Gil
-   - Andrés Rojas
-   - Álvaro Cabrero: https://www.linkedin.com/in/alvaro-cabrero-barros-b3132916b/
+   - Alberto Martos Gómez
+   - Carmen Ocampo  Lourido
+   - Daniel Carrasco Merino 
+   - Raúl Corrales Corrales
+   - Adrián Gil Miranda
+   - Andrés David Rojas Carrillo
+   - Álvaro Cabrero Barros: https://www.linkedin.com/in/alvaro-cabrero-barros-b3132916b/
 
 © Walking Octopus Games
 
