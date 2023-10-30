@@ -7,12 +7,7 @@
 2. Visual studio 2019/2022.
 
 ## Steps to open the project:
-### From Unreal Editor:
-1. Double click in the .uproject file.
- ![image](https://github.com/Walking-Octopus-Games/LunarPunk/assets/25354672/e9958243-1e76-47cc-8dce-e062e9797fc9)
 
-
-### From source code:
 1. Right click in the .uproject file and click generate visual studio solution.
    
   ![image](https://github.com/alvarocabrero/LunarPunk/assets/25354672/0146b2a1-3229-4a59-9c9a-005f08874efb)
